@@ -24,4 +24,5 @@
             @endforeach
         </nav>
     </details>
+    <a class="site-header__action" href="{{ route('products.index') }}">Lihat produk</a>
 </header>

@@ -60,16 +60,16 @@ summary:focus-visible {
 }
 
 .site-header {
-    display: flex;
+    display: grid;
     position: fixed;
     z-index: 20;
     inset: 0 0 auto;
     width: 100%;
-    min-height: 88px;
+    min-height: 72px;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    padding-inline: max(24px, calc((100% - 1280px) / 2));
+    gap: 20px;
+    padding-inline: max(24px, calc((100% - 1200px) / 2));
     border-bottom: 1px solid var(--color-rule);
     background: var(--color-ivory);
     background-image:
@@ -84,21 +84,23 @@ summary:focus-visible {
 }
 
 .site-header-spacer {
-    min-height: 88px;
+    min-height: 72px;
 }
 
 .site-brand {
     display: inline-flex;
+    width: fit-content;
     align-items: center;
-    gap: 12px;
+    gap: 9px;
+    justify-self: start;
     color: var(--color-brand-dark);
     text-decoration: none;
 }
 
 .site-brand__logo {
     width: auto;
-    max-width: 140px;
-    max-height: 56px;
+    max-width: 46px;
+    max-height: 44px;
     object-fit: contain;
 }
 
@@ -114,20 +116,21 @@ summary:focus-visible {
 .site-brand__name {
     color: var(--color-brand-dark);
     font-family: var(--font-display);
-    font-size: 1.8rem;
+    font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.1;
 }
 
 .site-brand__descriptor {
     color: var(--color-brand);
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
 }
 
 .site-menu {
     position: relative;
+    justify-self: center;
 }
 
 .site-menu__trigger {
@@ -137,13 +140,13 @@ summary:focus-visible {
 .site-nav {
     display: flex;
     align-items: center;
-    gap: clamp(20px, 3vw, 42px);
+    gap: clamp(14px, 2.2vw, 28px);
 }
 
 .site-nav a {
     color: var(--color-brand-dark);
-    font-size: 1.05rem;
-    font-weight: 500;
+    font-size: 0.82rem;
+    font-weight: 600;
     text-decoration: none;
 }
 
@@ -152,6 +155,24 @@ summary:focus-visible {
     text-decoration: underline;
     text-decoration-color: var(--color-gold);
     text-underline-offset: 5px;
+}
+
+.site-header__action {
+    justify-self: end;
+    padding: 9px 17px;
+    border-radius: 999px;
+    background: var(--color-brand);
+    color: #FFF;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.site-header__action:hover {
+    transform: translateY(-1px);
+    background: var(--color-brand-dark);
 }
 
 .site-main {
@@ -699,9 +720,11 @@ summary:focus-visible {
     }
 
     .site-header {
-        width: 100%;
+        display: flex;
         padding-inline: 16px;
         min-height: 72px;
+        gap: 12px;
+        justify-content: space-between;
     }
 
     .site-header-spacer {
@@ -709,11 +732,16 @@ summary:focus-visible {
     }
 
     .site-brand__name {
-        font-size: 1.5rem;
+        font-size: 1.15rem;
     }
 
     .site-brand__descriptor {
-        font-size: 0.7rem;
+        font-size: 0.58rem;
+    }
+
+    .site-brand__logo {
+        max-width: 40px;
+        max-height: 40px;
     }
 
     .site-menu__trigger {
@@ -727,6 +755,10 @@ summary:focus-visible {
         cursor: pointer;
         font-size: 1rem;
         list-style: none;
+    }
+
+    .site-header__action {
+        display: none;
     }
 
     .site-menu__trigger::-webkit-details-marker {
@@ -765,6 +797,7 @@ summary:focus-visible {
 
     .site-nav a {
         padding-block: 12px;
+        font-size: 0.95rem;
     }
 
     .page-container {
