@@ -28,7 +28,7 @@ On Unix-like shells, use `cp .env.example .env` instead of `copy`. The administr
 
 ## Production hosting and deployment
 
-1. Deploy a reviewed release and set the web server document root to the release's `public/` directory. Do not expose the repository root, `.env`, `storage/`, `vendor/`, or source files over HTTP.
+1. Deploy a reviewed release and set the web server document root to the release's `public/` directory. Do not expose the repository root, `.env`, `storage/`, `vendor/`, or source files over HTTP. The `public/` directory includes its own Laravel entry point and Apache rewrite rules. If a shared host cannot change its document root from the project root, the root `.htaccess` forwards requests into `public/`; this fallback requires Apache-compatible rewrite support and `AllowOverride` to be enabled.
 2. Configure secrets in the hosting secret manager (not in source control): `APP_KEY`, `APP_URL` with its HTTPS origin, database credentials, and any mail/storage credentials. Set `APP_ENV=production`, `APP_DEBUG=false`, and `SESSION_SECURE_COOKIE=true`. Keep `APP_KEY` stable and backed up securely; rotating it invalidates encrypted data and cookies.
 3. Use HTTPS end-to-end where possible. If TLS terminates at a CDN/load balancer, configure Laravel's trusted proxies for that specific provider so secure requests and cookies are recognized. The application emits HSTS only for production requests Laravel recognizes as HTTPS.
 4. Use a dedicated database identity with only the privileges required by the application and release migrations. Configure the cache/session store for the deployment topology; use shared stores when running multiple application instances.
@@ -51,7 +51,7 @@ On Unix-like shells, use `cp .env.example .env` instead of `copy`. The administr
 
 ### Manual cPanel / shared hosting upload
 
-Use this procedure when the host provides cPanel, SSH/Terminal, MySQL, and a configurable domain document root. Replace every path and credential placeholder with values shown by the host. If the host cannot set the document root to the application's `public/` directory or does not support the required PHP version/extensions, do not expose the project root; ask the host for a compatible Laravel setup.
+Use this procedure when the host provides cPanel, SSH/Terminal, and MySQL. Replace every path and credential placeholder with values shown by the host. Prefer setting the domain document root to the application's `public/` directory. If the host cannot change its document root, the project-root fallback is only suitable when Apache-compatible rewrite rules are enabled and the root `.htaccess` is honored; otherwise ask the host for a compatible Laravel setup rather than exposing the project files.
 
 1. In cPanel, create a MySQL database and a dedicated database user. Grant that user access only to this database. Record the database name, username, password, and database host exactly as cPanel displays them; the host is not always `localhost`.
 2. In **Domains**, set the site's document root to `/home/CPANEL_USER/alfikar/public`. Upload/extract the project into `/home/CPANEL_USER/alfikar`, outside `public_html` if that directory is the web root. Never put `.env`, `vendor/`, `storage/`, or the application root inside a public document root.
@@ -104,7 +104,7 @@ Use this procedure when the host provides cPanel, SSH/Terminal, MySQL, and a con
     php artisan optimize
     ```
 
-    Run `app:make-admin` in a protected interactive SSH terminal and enter a unique administrator password. There is intentionally no default account. If symlinks are disabled by the host, ask the host to enable Laravel's `public/storage` link or provide an equivalent secure static-file mapping; do not make uploaded files directly executable.
+    Run `app:make-admin` in a protected interactive SSH terminal and enter a unique administrator password. There is intentionally no default account. If `storage:link` fails because PHP disables `exec()`, create the public link from the application root with `ln -s ../storage/app/public public/storage` after confirming `public/storage` does not already exist. If symlinks are disabled by the host, ask the host to enable Laravel's `public/storage` link or provide an equivalent secure static-file mapping; do not make uploaded files directly executable.
 
 8. Ensure the PHP/web account can write to `storage/` and `bootstrap/cache/` using the host's ownership controls. For a single-account cPanel setup, `chmod -R u+rwX storage bootstrap/cache` is a starting point if the application account owns the files. Do not use `777`.
 9. In **Cron Jobs**, add the Laravel scheduler every minute. Replace the PHP path with the host's CLI binary that matches the selected PHP version:
