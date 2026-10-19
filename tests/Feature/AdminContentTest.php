@@ -237,7 +237,11 @@ it('publishes the editable business name and optimized logo in the public header
         ->assertOk()
         ->assertSee('Alfikar Pustaka')
         ->assertSee('alt="Logo Alfikar Pustaka"', false)
-        ->assertSee($logoPath);
+        ->assertSee($logoPath)
+        ->assertSee(
+            '<link rel="icon" href="'.Storage::disk(config('image-processing.disk', 'public'))->url($logoPath).'" type="image/webp">',
+            false,
+        );
     $this->get(route('admin.settings.edit'))
         ->assertOk()
         ->assertSee('Nama usaha / teks di TOP Bar')

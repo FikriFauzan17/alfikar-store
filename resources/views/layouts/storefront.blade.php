@@ -5,6 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="@yield('meta_description', $siteSeo['seo_description'] ?? 'Profil dan katalog Toko Buku Alfikar.')">
         <meta name="theme-color" content="#FAF9F6">
+        @if ($siteLogoUrl)
+            <link rel="icon" href="{{ $siteLogoUrl }}" type="image/webp">
+        @endif
         <title>@yield('title', $siteSeo['seo_title'] ?? 'Beranda') | {{ $siteName }}</title>
         <link rel="canonical" href="@yield('canonical', request()->url())">
         <meta name="robots" content="@yield('robots', 'index,follow')">
