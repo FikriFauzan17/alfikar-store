@@ -42,6 +42,7 @@ it('backs up and restores database data and public images to isolated destinatio
 
     try {
         DB::connection('backup_source')->statement('CREATE TABLE backup_records (id INTEGER PRIMARY KEY, payload TEXT NOT NULL)');
+        DB::connection('backup_source')->statement('CREATE TABLE audit_logs (id INTEGER PRIMARY KEY, created_at DATETIME NOT NULL)');
         DB::connection('backup_source')->table('backup_records')->insert([
             'id' => 1,
             'payload' => 'verified-restored-record',

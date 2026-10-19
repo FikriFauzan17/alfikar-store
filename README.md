@@ -45,6 +45,8 @@ On Unix-like shells, use `cp .env.example .env` instead of `copy`. The administr
 
     Back up the target database and public uploads before applying migrations. Check `php artisan migrate:status --no-ansi` against the target database; do not infer the target status from a local database. Apply pending migrations only after confirming the backup and selected database.
 
+    The scheduled daily `backup:run` creates a verified private snapshot before deleting audit logs older than 12 months. If a backup is skipped or fails, audit-log cleanup does not run.
+
 6. Run `php artisan app:make-admin` once through a protected administrative shell if no administrator exists. Protect shell access and the resulting credentials; do not seed a default user.
 7. Give the web process write access only where needed, typically `storage/` and `bootstrap/cache/`. Use least-privilege ownership/modes; do not use `chmod -R 777`. Keep `storage/app/private/` inaccessible from the web. Product, article, and banner images are processed into public WebP variants and intentionally served via `public/storage`; do not store private documents there.
 8. Confirm HTTPS redirects, secure session cookies, admin access, backups, the health endpoint, and the built CSS/JS on the real host before opening traffic. Monitor application, web-server, database, and CDN logs.
