@@ -237,12 +237,14 @@ summary:focus-visible {
 .home-intro {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.62fr);
-    min-height: clamp(430px, 48vw, 650px);
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.78fr);
+    min-height: clamp(340px, 38vw, 480px);
     align-items: center;
     overflow: hidden;
-    margin-block: 28px 72px;
-    padding: clamp(36px, 7vw, 96px);
+    margin-block: 24px 44px;
+    padding: clamp(28px, 5vw, 64px);
+    border: 1px solid rgb(198 167 94 / 0.24);
+    border-radius: 18px;
     background-color: var(--color-brand-dark);
     background-image:
         radial-gradient(ellipse at 88% 18%, rgb(198 167 94 / 0.17), transparent 30%),
@@ -267,7 +269,7 @@ summary:focus-visible {
 }
 
 .home-intro--empty {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 0.5fr);
 }
 
 .home-intro__cover {
@@ -279,10 +281,12 @@ summary:focus-visible {
 
 .home-intro__cover img {
     width: min(100%, 320px);
-    max-height: 470px;
+    max-height: 360px;
     aspect-ratio: 2 / 3;
-    object-fit: cover;
-    box-shadow: 18px 20px 0 rgb(198 167 94 / 0.85);
+    border: 7px solid rgb(255 255 255 / 0.84);
+    border-radius: 5px;
+    object-fit: contain;
+    box-shadow: 0 22px 44px rgb(24 35 29 / 0.2), 12px 14px 0 rgb(198 167 94 / 0.55);
 }
 
 .home-intro__eyebrow {
@@ -295,12 +299,13 @@ summary:focus-visible {
 }
 
 .home-intro h1 {
-    max-width: 12ch;
+    max-width: 16ch;
     margin: 0;
+    color: var(--color-ivory);
     font-family: var(--font-display);
-    font-size: clamp(2.7rem, 6.5vw, 5.8rem);
+    font-size: clamp(2.25rem, 4.7vw, 3.75rem);
     font-weight: 600;
-    line-height: 1.02;
+    line-height: 1.08;
 }
 
 .home-intro__description {
@@ -308,6 +313,25 @@ summary:focus-visible {
     margin: 24px 0 0;
     color: rgb(250 249 246 / 0.82);
     font-size: 1rem;
+}
+
+.home-intro a.mt-6 {
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 22px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.home-intro a.mt-6:hover {
+    transform: translateY(-1px);
+}
+
+.page-container > section[aria-labelledby] {
+    padding-block: clamp(32px, 4.5vw, 52px);
 }
 
 .site-footer {
@@ -748,22 +772,24 @@ summary:focus-visible {
     }
 
     .home-intro {
-        grid-template-columns: minmax(0, 1fr) minmax(100px, 34%);
-        min-height: 360px;
-        margin-block: 16px 48px;
+        grid-template-columns: minmax(0, 1fr) minmax(92px, 34%);
+        min-height: 300px;
+        margin-block: 14px 24px;
         padding: 24px 18px;
+        border-radius: 14px;
     }
 
     .home-intro--empty {
-        grid-template-columns: minmax(0, 1fr);
-        min-height: 240px;
-        padding: 24px;
+        grid-template-columns: minmax(0, 1fr) minmax(55px, 22%);
+        min-height: 250px;
+        padding: 24px 18px;
     }
 
     .home-intro__cover img {
         width: 100%;
-        max-height: 300px;
-        box-shadow: 8px 10px 0 rgb(198 167 94 / 0.85);
+        max-height: 240px;
+        border-width: 4px;
+        box-shadow: 6px 8px 0 rgb(198 167 94 / 0.55), 0 12px 24px rgb(24 35 29 / 0.16);
     }
 
     .home-intro::after {
@@ -772,13 +798,26 @@ summary:focus-visible {
     }
 
     .home-intro h1 {
-        max-width: 18ch;
-        font-size: clamp(2.25rem, 9vw, 3.2rem);
+        max-width: 17ch;
+        font-size: clamp(1.85rem, 8vw, 2.65rem);
     }
 
     .home-intro__description {
-        max-width: 34ch;
-        font-size: 0.95rem;
+        max-width: 30ch;
+        margin-top: 14px;
+        font-size: 0.88rem;
+    }
+
+    .home-intro a.mt-6 {
+        margin-top: 16px;
+        padding: 10px 16px;
+        font-size: 0.82rem;
+    }
+
+    section[aria-labelledby="books-title"] article,
+    section[aria-labelledby="bestsellers-title"] article {
+        padding: 7px;
+        border-radius: 9px;
     }
 
     .site-footer__inner {
@@ -791,14 +830,14 @@ summary:focus-visible {
 }
 
 .section-heading {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .section-heading h2 {
     margin: 0;
     color: var(--color-brand-dark);
     font-family: var(--font-display);
-    font-size: 1.9rem;
+    font-size: clamp(1.55rem, 2.6vw, 2rem);
     line-height: 1.2;
 }
 
@@ -806,6 +845,52 @@ summary:focus-visible {
     margin: 6px 0 0;
     color: #5B625C;
     font-size: 0.92rem;
+}
+
+section[aria-labelledby="books-title"] article,
+section[aria-labelledby="bestsellers-title"] article {
+    overflow: hidden;
+    padding: 10px;
+    border: 1px solid #E9E4D8;
+    border-radius: 12px;
+    box-shadow: 0 5px 16px rgb(24 35 29 / 0.045);
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+section[aria-labelledby="books-title"] article:hover,
+section[aria-labelledby="bestsellers-title"] article:hover {
+    transform: translateY(-3px);
+    border-color: rgb(4 120 87 / 0.35);
+    box-shadow: 0 12px 24px rgb(24 35 29 / 0.1);
+}
+
+section[aria-labelledby="books-title"] article > a > div,
+section[aria-labelledby="bestsellers-title"] article > a > div {
+    overflow: hidden;
+    border: 0;
+    border-radius: 8px;
+}
+
+section[aria-labelledby="books-title"] article > a > div img,
+section[aria-labelledby="bestsellers-title"] article > a > div img {
+    padding: 8px;
+    object-fit: contain;
+}
+
+section[aria-labelledby="services-title"] > .grid > div {
+    border: 1px solid #E9E4D8;
+    border-top: 2px solid var(--color-gold);
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgb(24 35 29 / 0.035);
+}
+
+section[aria-labelledby="categories-title"] a {
+    border-radius: 12px;
+    box-shadow: 0 5px 16px rgb(24 35 29 / 0.045);
+}
+
+.site-footer {
+    border-top: 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -2134,8 +2219,17 @@ summary:focus-visible {
     .admin-shortcut-card,
     .admin-content button[type="submit"],
     .admin-button,
-    .product-image-control {
+    .product-image-control,
+    .home-intro a.mt-6,
+    section[aria-labelledby="books-title"] article,
+    section[aria-labelledby="bestsellers-title"] article {
         transition: none;
+    }
+
+    .home-intro a.mt-6:hover,
+    section[aria-labelledby="books-title"] article:hover,
+    section[aria-labelledby="bestsellers-title"] article:hover {
+        transform: none;
     }
 
     .admin-loading {
