@@ -1,3 +1,6 @@
+import { Editor } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+
 const siteMenu = document.querySelector('.site-menu');
 const mobileViewport = window.matchMedia('(max-width: 700px)');
 
@@ -99,289 +102,214 @@ if (featuredCarousel instanceof HTMLElement) {
 	}
 }
 
-const articleEditor = document.querySelector('[data-article-editor]');
+const isSafeEditorLink = (url) => {
+	const value = url.trim();
 
-if (articleEditor instanceof HTMLElement) {
-	const source = articleEditor.querySelector('[data-article-editor-source]');
-	const surface = articleEditor.querySelector('[data-article-editor-surface]');
-	const toolbar = articleEditor.querySelector('[data-article-editor-toolbar]');
-	const tabs = articleEditor.querySelector('[data-article-editor-tabs]');
-	const label = articleEditor.querySelector('[data-article-editor-label]');
-	const status = articleEditor.querySelector('[data-article-editor-status]');
-	const counter = articleEditor.querySelector('[data-article-editor-count]');
-	const form = articleEditor.closest('form');
-	const allowedElements = new Set(['a', 'blockquote', 'br', 'code', 'em', 'h2', 'h3', 'h4', 'hr', 'i', 'li', 'ol', 'p', 'pre', 'strong', 'u', 'ul']);
-	const removedElements = new Set(['embed', 'iframe', 'math', 'object', 'script', 'style', 'svg', 'template']);
-	const maximumLength = 50000;
+	if (!value || /[\u0000-\u0020]/u.test(value) || value.startsWith('//')) {
+		return false;
+	}
+
+	if (value.startsWith('/') || value.startsWith('#')) {
+		return true;
+	}
+
+	const scheme = value.match(/^([a-z][a-z0-9+.-]*):/iu)?.[1].toLowerCase();
+	return ['http', 'https', 'mailto'].includes(scheme);
+};
+
+document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
+	if (!(editorRoot instanceof HTMLElement)) {
+		return;
+	}
+
+	const source = editorRoot.querySelector('[data-rich-text-source]');
+	const surface = editorRoot.querySelector('[data-rich-text-surface]');
+	const toolbar = editorRoot.querySelector('[data-rich-text-toolbar]');
+	const status = editorRoot.querySelector('[data-rich-text-status]');
+	const counter = editorRoot.querySelector('[data-rich-text-count]');
+	const form = editorRoot.closest('form');
+	const maxLength = Number(editorRoot.dataset.richTextMaxLength);
 
 	if (
-		source instanceof HTMLTextAreaElement
-		&& surface instanceof HTMLElement
-		&& toolbar instanceof HTMLElement
-		&& tabs instanceof HTMLElement
-		&& label instanceof HTMLLabelElement
-		&& status instanceof HTMLElement
-		&& counter instanceof HTMLElement
-		&& form instanceof HTMLFormElement
+		!(source instanceof HTMLTextAreaElement)
+		|| !(surface instanceof HTMLElement)
+		|| !(toolbar instanceof HTMLElement)
+		|| !(status instanceof HTMLElement)
+		|| !(counter instanceof HTMLElement)
+		|| !(form instanceof HTMLFormElement)
+		|| !Number.isInteger(maxLength)
+		|| maxLength < 1
 	) {
-		const isSafeLink = (url) => {
-			const value = url.trim();
+		return;
+	}
 
-			if (!value || /[\u0000-\u0020]/u.test(value) || value.startsWith('//')) {
-				return false;
-			}
-
-			if (value.startsWith('/') || value.startsWith('#')) {
-				return true;
-			}
-
-			const scheme = value.match(/^([a-z][a-z0-9+.-]*):/iu)?.[1].toLowerCase();
-			return ['http', 'https', 'mailto'].includes(scheme);
+	const isRequired = source.required;
+	const updateToolbar = (editor) => {
+		const commands = {
+			bold: editor.isActive('bold'),
+			italic: editor.isActive('italic'),
+			underline: editor.isActive('underline'),
+			strike: editor.isActive('strike'),
+			code: editor.isActive('code'),
+			paragraph: editor.isActive('paragraph'),
+			heading2: editor.isActive('heading', { level: 2 }),
+			heading3: editor.isActive('heading', { level: 3 }),
+			blockquote: editor.isActive('blockquote'),
+			bulletList: editor.isActive('bulletList'),
+			orderedList: editor.isActive('orderedList'),
 		};
 
-		const appendSafeNodes = (sourceNodes, target) => {
-			sourceNodes.forEach((node) => {
-				if (node.nodeType === Node.TEXT_NODE) {
-					target.append(document.createTextNode(node.textContent ?? ''));
-					return;
-				}
-
-				if (!(node instanceof HTMLElement)) {
-					return;
-				}
-
-				const tag = node.tagName.toLowerCase();
-				if (removedElements.has(tag)) {
-					return;
-				}
-				if (tag === 'b') {
-					const strongElement = document.createElement('strong');
-					appendSafeNodes(Array.from(node.childNodes), strongElement);
-					target.append(strongElement);
-					return;
-				}
-
-				if (!allowedElements.has(tag)) {
-					appendSafeNodes(Array.from(node.childNodes), target);
-					return;
-				}
-
-				const safeElement = document.createElement(tag);
-				if (tag === 'a') {
-					const href = node.getAttribute('href');
-					const title = node.getAttribute('title');
-
-					if (href && isSafeLink(href)) {
-						safeElement.setAttribute('href', href);
-					}
-					if (title) {
-						safeElement.setAttribute('title', title);
-					}
-				}
-
-				appendSafeNodes(Array.from(node.childNodes), safeElement);
-				target.append(safeElement);
-			});
-		};
-
-		const safeInitialContent = (html) => {
-			const template = document.createElement('template');
-			template.innerHTML = html;
-			const safeContent = document.createDocumentFragment();
-			appendSafeNodes(Array.from(template.content.childNodes), safeContent);
-			return safeContent;
-		};
-
-		const synchronizeSource = () => {
-			source.value = surface.innerHTML;
-			counter.textContent = `${surface.textContent?.length ?? 0} / ${maximumLength.toLocaleString('id-ID')} karakter`;
-			counter.hidden = false;
-		};
-
-		const activateTab = (name, focusTab = false) => {
-			tabs.querySelectorAll('[data-article-editor-tab]').forEach((tab) => {
-				if (!(tab instanceof HTMLButtonElement)) {
-					return;
-				}
-
-				const isActive = tab.dataset.articleEditorTab === name;
-				tab.classList.toggle('is-active', isActive);
-				tab.setAttribute('aria-selected', String(isActive));
-				tab.tabIndex = isActive ? 0 : -1;
-				if (isActive && focusTab) {
-					tab.focus();
-				}
-			});
-
-			toolbar.querySelectorAll('[data-article-editor-panel]').forEach((panel) => {
-				panel.hidden = panel.dataset.articleEditorPanel !== name;
-			});
-		};
-
-		let savedRange = null;
-		const rememberSelection = () => {
-			const selection = window.getSelection();
-			const anchorNode = selection?.anchorNode;
-			const focusNode = selection?.focusNode;
-			const anchorInside = anchorNode === surface || (anchorNode instanceof Node && surface.contains(anchorNode));
-			const focusInside = focusNode === surface || (focusNode instanceof Node && surface.contains(focusNode));
-
-			if (selection?.rangeCount && anchorInside && focusInside) {
-				savedRange = selection.getRangeAt(0).cloneRange();
-			}
-		};
-
-		const focusAtSavedSelection = () => {
-			surface.focus();
-			const selection = window.getSelection();
-
-			if (savedRange && selection) {
-				selection.removeAllRanges();
-				selection.addRange(savedRange);
-			}
-		};
-
-		const updateFormatButtons = () => {
-			toolbar.querySelectorAll('[data-article-editor-toggle]').forEach((button) => {
-				if (button instanceof HTMLButtonElement) {
-					button.setAttribute('aria-pressed', String(document.queryCommandState(button.dataset.articleEditorCommand)));
-				}
-			});
-		};
-
-		surface.replaceChildren(safeInitialContent(source.value));
-		document.execCommand('defaultParagraphSeparator', false, 'p');
-		source.required = false;
-		source.hidden = true;
-		surface.hidden = false;
-		toolbar.hidden = false;
-		counter.hidden = false;
-		label.htmlFor = surface.id;
-		synchronizeSource();
-		activateTab('home');
-
-		document.addEventListener('selectionchange', () => {
-			rememberSelection();
-			if (document.activeElement === surface) {
-				updateFormatButtons();
-			}
-		});
-
-		surface.addEventListener('keyup', updateFormatButtons);
-		surface.addEventListener('mouseup', updateFormatButtons);
-
-		tabs.addEventListener('click', (event) => {
-			if (!(event.target instanceof Element)) {
-				return;
-			}
-
-			const tab = event.target.closest('[data-article-editor-tab]');
-			if (tab instanceof HTMLButtonElement) {
-				activateTab(tab.dataset.articleEditorTab);
-			}
-		});
-
-		tabs.addEventListener('keydown', (event) => {
-			const tabButtons = Array.from(tabs.querySelectorAll('[data-article-editor-tab]'));
-			const currentIndex = tabButtons.indexOf(document.activeElement);
-			let nextIndex = currentIndex;
-
-			if (event.key === 'ArrowRight') {
-				nextIndex = (currentIndex + 1) % tabButtons.length;
-			} else if (event.key === 'ArrowLeft') {
-				nextIndex = (currentIndex - 1 + tabButtons.length) % tabButtons.length;
-			} else if (event.key === 'Home') {
-				nextIndex = 0;
-			} else if (event.key === 'End') {
-				nextIndex = tabButtons.length - 1;
-			} else {
-				return;
-			}
-
-			event.preventDefault();
-			activateTab(tabButtons[nextIndex].dataset.articleEditorTab, true);
-		});
-
-		surface.addEventListener('input', () => {
-			normalizeBoldElements();
-			synchronizeSource();
-			status.hidden = true;
-		});
-
-		const normalizeBoldElements = () => {
-			surface.querySelectorAll('b').forEach((boldElement) => {
-				const strongElement = document.createElement('strong');
-				strongElement.replaceChildren(...Array.from(boldElement.childNodes));
-				boldElement.replaceWith(strongElement);
-			});
-		};
-
-		toolbar.addEventListener('mousedown', (event) => {
-			if (event.target instanceof Element && event.target.closest('button')) {
-				event.preventDefault();
-			}
-		});
-
-		toolbar.addEventListener('click', (event) => {
-			if (!(event.target instanceof Element)) {
-				return;
-			}
-
-			const button = event.target.closest('[data-article-editor-command]');
+		toolbar.querySelectorAll('[data-rich-text-command][aria-pressed]').forEach((button) => {
 			if (!(button instanceof HTMLButtonElement)) {
 				return;
 			}
 
-			const command = button.dataset.articleEditorCommand;
-			let value = button.dataset.articleEditorValue ?? null;
-			if (command === 'createLink') {
+			const command = button.dataset.richTextCommand;
+			const key = command === 'heading' ? `heading${button.dataset.richTextLevel}` : command;
+			button.setAttribute('aria-pressed', String(commands[key] ?? false));
+		});
+	};
+
+	const editor = new Editor({
+		element: surface,
+		content: source.value || '<p></p>',
+		extensions: [
+			StarterKit.configure({
+				heading: { levels: [2, 3, 4] },
+				link: {
+					openOnClick: false,
+					autolink: false,
+					linkOnPaste: false,
+					isAllowedUri: isSafeEditorLink,
+				},
+			}),
+		],
+		editorProps: {
+			attributes: {
+				class: 'tiptap-editor__content',
+				role: 'textbox',
+				'aria-multiline': 'true',
+				'aria-labelledby': surface.getAttribute('aria-labelledby') ?? '',
+				'aria-describedby': surface.getAttribute('aria-describedby') ?? '',
+				'aria-required': String(isRequired),
+			},
+		},
+		onUpdate: ({ editor: updatedEditor }) => {
+			source.value = updatedEditor.getText().trim() === '' ? '' : updatedEditor.getHTML();
+			counter.textContent = `${updatedEditor.getText().length.toLocaleString('id-ID')} / ${maxLength.toLocaleString('id-ID')} karakter`;
+			status.hidden = true;
+			updateToolbar(updatedEditor);
+		},
+		onSelectionUpdate: ({ editor: updatedEditor }) => updateToolbar(updatedEditor),
+	});
+
+	source.required = false;
+	source.hidden = true;
+	surface.hidden = false;
+	toolbar.hidden = false;
+	counter.hidden = false;
+	source.value = editor.getText().trim() === '' ? '' : editor.getHTML();
+	counter.textContent = `${editor.getText().length.toLocaleString('id-ID')} / ${maxLength.toLocaleString('id-ID')} karakter`;
+	updateToolbar(editor);
+
+	toolbar.addEventListener('mousedown', (event) => {
+		if (event.target instanceof Element && event.target.closest('button')) {
+			event.preventDefault();
+		}
+	});
+
+	toolbar.addEventListener('click', (event) => {
+		if (!(event.target instanceof Element)) {
+			return;
+		}
+
+		const button = event.target.closest('[data-rich-text-command]');
+		if (!(button instanceof HTMLButtonElement)) {
+			return;
+		}
+
+		const command = button.dataset.richTextCommand;
+		const chain = editor.chain().focus();
+
+		switch (command) {
+			case 'bold':
+				chain.toggleBold().run();
+				break;
+			case 'italic':
+				chain.toggleItalic().run();
+				break;
+			case 'underline':
+				chain.toggleUnderline().run();
+				break;
+			case 'strike':
+				chain.toggleStrike().run();
+				break;
+			case 'code':
+				chain.toggleCode().run();
+				break;
+			case 'codeBlock':
+				chain.toggleCodeBlock().run();
+				break;
+			case 'paragraph':
+				chain.setParagraph().run();
+				break;
+			case 'heading':
+				chain.toggleHeading({ level: Number(button.dataset.richTextLevel) }).run();
+				break;
+			case 'blockquote':
+				chain.toggleBlockquote().run();
+				break;
+			case 'bulletList':
+				chain.toggleBulletList().run();
+				break;
+			case 'orderedList':
+				chain.toggleOrderedList().run();
+				break;
+			case 'horizontalRule':
+				chain.setHorizontalRule().run();
+				break;
+			case 'undo':
+				chain.undo().run();
+				break;
+			case 'redo':
+				chain.redo().run();
+				break;
+			case 'link': {
 				const url = window.prompt('Masukkan URL tautan');
-				if (!url) {
+				if (url === null) {
 					return;
 				}
-				if (!isSafeLink(url)) {
+
+				if (!isSafeEditorLink(url)) {
 					status.textContent = 'Gunakan tautan relatif, HTTP, HTTPS, atau email yang aman.';
 					status.hidden = false;
 					return;
 				}
-				value = url.trim();
+
+				chain.extendMarkRange('link').setLink({ href: url.trim() }).run();
+				break;
 			}
-
-			focusAtSavedSelection();
-			document.execCommand(command, false, value);
-			normalizeBoldElements();
-			synchronizeSource();
-			status.hidden = true;
-			rememberSelection();
-			updateFormatButtons();
-		});
-
-		const formatSelect = toolbar.querySelector('[data-article-editor-format]');
-		if (formatSelect instanceof HTMLSelectElement) {
-			formatSelect.addEventListener('change', () => {
-				focusAtSavedSelection();
-				document.execCommand('formatBlock', false, formatSelect.value);
-				synchronizeSource();
-				rememberSelection();
-			});
+			case 'unlink':
+				chain.extendMarkRange('link').unsetLink().run();
+				break;
 		}
+	});
 
-		form.addEventListener('submit', (event) => {
-			synchronizeSource();
-			const serializedLength = source.value.length;
-			const hasText = Boolean(surface.textContent?.trim());
+	form.addEventListener('submit', (event) => {
+		source.value = editor.getText().trim() === '' ? '' : editor.getHTML();
+		const hasText = editor.getText().trim() !== '';
+		const exceedsLimit = source.value.length > maxLength || editor.getText().length > maxLength;
 
-			if (!hasText || serializedLength > maximumLength) {
-				event.preventDefault();
-				status.textContent = hasText
-					? 'Isi artikel terlalu panjang. Kurangi beberapa bagian sebelum menyimpan.'
-					: 'Isi artikel belum diisi.';
-				status.hidden = false;
-				surface.focus();
-			}
-		});
-	}
-}
+		if ((isRequired && !hasText) || exceedsLimit) {
+			event.preventDefault();
+			status.textContent = exceedsLimit
+				? `Konten melebihi batas ${maxLength.toLocaleString('id-ID')} karakter.`
+				: 'Konten belum diisi.';
+			status.hidden = false;
+			editor.commands.focus();
+		}
+	});
+});
 
 const productGallery = document.querySelector('[data-product-gallery]');
 

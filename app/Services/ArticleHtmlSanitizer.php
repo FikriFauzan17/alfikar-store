@@ -10,8 +10,8 @@ use DOMNode;
 final class ArticleHtmlSanitizer
 {
     private const ALLOWED_ELEMENTS = [
-        'a', 'blockquote', 'br', 'code', 'em', 'h2', 'h3', 'h4', 'hr',
-        'i', 'li', 'ol', 'p', 'pre', 'strong', 'u', 'ul',
+        'a', 'blockquote', 'br', 'code', 'del', 'em', 'h2', 'h3', 'h4', 'hr',
+        'i', 'li', 'ol', 'p', 'pre', 's', 'strong', 'u', 'ul',
     ];
 
     public function sanitize(string $html): string

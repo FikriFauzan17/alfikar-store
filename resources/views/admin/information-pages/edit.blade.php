@@ -22,7 +22,7 @@
                 <span class="admin-badge">Draft tersimpan</span>
             @endif
         </div>
-        <p class="mb-5 text-sm leading-6 text-ink/70">Gunakan teks biasa. Isi akan ditampilkan sebagai teks, bukan HTML. Pastikan konten sudah sesuai dan disetujui sebelum memilih Publikasikan.</p>
+        <p class="mb-5 text-sm leading-6 text-ink/70">Gunakan editor untuk menyusun konten dengan judul, paragraf, daftar, kutipan, dan tautan. Konten berbahaya dibuang sebelum ditampilkan; pastikan isi sudah sesuai sebelum dipublikasikan.</p>
 
         <form method="POST" action="{{ route('admin.information-pages.update', ['page' => $slug]) }}">
             @csrf
@@ -33,12 +33,15 @@
                     <input class="admin-field-input" id="information-title" name="title" type="text" maxlength="255" required value="{{ old('title', $content['title']) }}" aria-describedby="information-title-error" @error('title') aria-invalid="true" @enderror>
                     @error('title')<p class="admin-field-error" id="information-title-error">{{ $message }}</p>@enderror
                 </div>
-                <div>
-                    <label class="admin-field-label" for="information-content">Konten</label>
-                    <textarea class="admin-field-input min-h-72" id="information-content" name="content" rows="14" maxlength="30000" aria-describedby="information-content-help information-content-error" @error('content') aria-invalid="true" @enderror>{{ old('content', $content['content']) }}</textarea>
-                    <p class="mt-1 text-xs text-ink/60" id="information-content-help">Maksimal 30.000 karakter. Konten kosong dapat disimpan sebagai draft, tetapi tidak dapat dipublikasikan.</p>
-                    @error('content')<p class="admin-field-error" id="information-content-error">{{ $message }}</p>@enderror
-                </div>
+                <x-admin.rich-text-editor
+                    id="information-content"
+                    name="content"
+                    label="Konten"
+                    :value="$content['content']"
+                    :max-length="30000"
+                    :required="false"
+                    help-text="Maksimal 30.000 karakter. Konten kosong dapat disimpan sebagai draft, tetapi tidak dapat dipublikasikan."
+                />
             </div>
             <div class="mt-6 flex flex-wrap gap-3">
                 <button class="admin-button admin-button--quiet" type="submit" name="action" value="draft">Simpan Draft</button>

@@ -384,6 +384,8 @@ it('previews draft articles privately and only exposes them publicly after publi
         ->assertHeader('Cache-Control', 'max-age=0, no-store, private');
     $this->get(route('admin.articles.edit', $article))
         ->assertOk()
+        ->assertSee('data-rich-text-editor', false)
+        ->assertSee('data-rich-text-toolbar', false)
         ->assertSee('Simpan Draft')
         ->assertSee('Pratinjau')
         ->assertSee('Publikasikan');

@@ -19,10 +19,10 @@ it('keeps policy pages and their administration private until publication', func
     $this->assertDatabaseCount('site_settings', 0);
 });
 
-it('saves a private text draft and renders an escaped no-store preview', function () {
+it('sanitizes rich text drafts and renders a private no-store preview', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $this->actingAs($admin);
-    $content = '<script>alert("xss")</script>Konten draf belum diterbitkan.';
+    $content = '<h2>Informasi</h2><p><strong>Konten</strong> draf belum diterbitkan. <a href="javascript:alert(1)">Tautan</a></p><script>alert("xss")</script>';
 
     $this->put(route('admin.information-pages.update', 'kebijakan-privasi'), [
         'title' => 'Privasi <uji>',
@@ -41,12 +41,18 @@ it('saves a private text draft and renders an escaped no-store preview', functio
     ]);
     $this->assertDatabaseMissing('site_settings', ['setting_key' => 'privacy_policy']);
 
+    $this->get(route('admin.information-pages.edit', 'kebijakan-privasi'))
+        ->assertOk()
+        ->assertSee('data-rich-text-editor', false)
+        ->assertSee('data-rich-text-toolbar', false);
+
     $preview = $this->get(route('admin.information-pages.preview', 'kebijakan-privasi'));
     $preview->assertOk()
         ->assertHeader('X-Robots-Tag', 'noindex, nofollow')
         ->assertSee('Privasi &lt;uji&gt;', false)
-        ->assertSee('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;', false)
-        ->assertDontSee('<script>alert("xss")</script>', false)
+        ->assertSee('<h2>Informasi</h2><p><strong>Konten</strong> draf belum diterbitkan. <a>Tautan</a></p>', false)
+        ->assertDontSee('<script>', false)
+        ->assertDontSee('javascript:', false)
         ->assertSee('<meta name="robots" content="noindex,nofollow">', false);
     expect($preview->headers->get('Cache-Control'))
         ->toContain('private')
@@ -56,14 +62,14 @@ it('saves a private text draft and renders an escaped no-store preview', functio
     $this->get(route('pages.information', 'kebijakan-privasi'))->assertNotFound();
 });
 
-it('publishes approved page text, invalidates public settings, and includes only published pages in navigation and sitemap', function () {
+it('publishes approved rich text, invalidates public settings, and includes only published pages in navigation and sitemap', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $this->actingAs($admin);
     $this->get(route('home'))->assertOk()->assertDontSee('Kebijakan Privasi');
 
     $this->put(route('admin.information-pages.update', 'kebijakan-privasi'), [
         'title' => 'Kebijakan Privasi',
-        'content' => 'Konten sebelumnya yang telah disetujui.',
+        'content' => '<h2>Ringkasan</h2><p>Konten sebelumnya yang telah <strong>disetujui</strong>.</p>',
         'action' => 'publish',
     ])->assertRedirect(route('admin.information-pages.index'));
     $this->assertDatabaseHas('site_settings', [
@@ -78,6 +84,7 @@ it('publishes approved page text, invalidates public settings, and includes only
     $this->get(route('pages.information', 'kebijakan-privasi'))
         ->assertOk()
         ->assertSee('Konten sebelumnya yang telah disetujui.')
+        ->assertSee('<strong>disetujui</strong>', false)
         ->assertSee('Kebijakan Privasi');
 
     $this->put(route('admin.information-pages.update', 'kebijakan-privasi'), [
@@ -120,7 +127,7 @@ it('rejects publishing empty page content and invalid statistics ranges', functi
     $this->from(route('admin.information-pages.edit', 'ketentuan-pemesanan'))
         ->put(route('admin.information-pages.update', 'ketentuan-pemesanan'), [
             'title' => 'Ketentuan Pemesanan',
-            'content' => '',
+            'content' => '<p>&nbsp;</p><p><br></p><script>tidak terlihat</script>',
             'action' => 'publish',
         ])
         ->assertRedirect(route('admin.information-pages.edit', 'ketentuan-pemesanan'))

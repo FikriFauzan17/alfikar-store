@@ -14,67 +14,15 @@
         <label class="block text-sm font-medium" for="summary">Ringkasan</label>
         <textarea class="mt-1 w-full border border-rule bg-white px-3 py-2" id="summary" name="summary" rows="3" maxlength="5000" required>{{ old('summary', $article?->summary) }}</textarea>
     </div>
-    <div class="md:col-span-2" data-article-editor>
-        <label class="block text-sm font-medium" id="body-label" for="body" data-article-editor-label>Isi artikel</label>
-        <p class="mt-1 text-xs text-ink/60" id="body-help">Gunakan toolbar untuk memformat tulisan. Konten berbahaya akan dibuang saat disimpan.</p>
-        <div class="article-editor__ribbon mt-3" aria-label="Pita alat editor" data-article-editor-toolbar hidden>
-            <div class="article-editor__tabs" role="tablist" aria-label="Tab editor" data-article-editor-tabs>
-                <button class="article-editor__tab is-active" id="body-tab-home" type="button" role="tab" aria-selected="true" aria-controls="body-panel-home" data-article-editor-tab="home">Beranda</button>
-                <button class="article-editor__tab" id="body-tab-insert" type="button" role="tab" aria-selected="false" aria-controls="body-panel-insert" tabindex="-1" data-article-editor-tab="insert">Sisipkan</button>
-            </div>
-            <div class="article-editor__panel" id="body-panel-home" role="tabpanel" aria-labelledby="body-tab-home" data-article-editor-panel="home">
-                <div class="article-editor__group" aria-label="Urungkan dan ulangi">
-                    <div class="article-editor__group-tools">
-                        <button class="article-editor__button article-editor__button--symbol" type="button" data-article-editor-command="undo" aria-label="Urungkan" title="Urungkan (Ctrl+Z)">↶</button>
-                        <button class="article-editor__button article-editor__button--symbol" type="button" data-article-editor-command="redo" aria-label="Ulangi" title="Ulangi (Ctrl+Y)">↷</button>
-                    </div>
-                    <span class="article-editor__group-label">Urungkan</span>
-                </div>
-                <div class="article-editor__group" aria-label="Pemformatan huruf">
-                    <div class="article-editor__group-tools">
-                        <button class="article-editor__button article-editor__button--symbol article-editor__button--bold" type="button" data-article-editor-command="bold" data-article-editor-toggle aria-label="Tebal" title="Tebal (Ctrl+B)" aria-pressed="false">B</button>
-                        <button class="article-editor__button article-editor__button--symbol article-editor__button--italic" type="button" data-article-editor-command="italic" data-article-editor-toggle aria-label="Miring" title="Miring (Ctrl+I)" aria-pressed="false">I</button>
-                        <button class="article-editor__button article-editor__button--symbol article-editor__button--underline" type="button" data-article-editor-command="underline" data-article-editor-toggle aria-label="Garis bawah" title="Garis bawah (Ctrl+U)" aria-pressed="false">U</button>
-                    </div>
-                    <span class="article-editor__group-label">Huruf</span>
-                </div>
-                <div class="article-editor__group" aria-label="Paragraf dan daftar">
-                    <div class="article-editor__group-tools">
-                        <button class="article-editor__button article-editor__button--symbol" type="button" data-article-editor-command="insertUnorderedList" aria-label="Daftar berpoin" title="Daftar berpoin">•</button>
-                        <button class="article-editor__button article-editor__button--symbol" type="button" data-article-editor-command="insertOrderedList" aria-label="Daftar bernomor" title="Daftar bernomor">1.</button>
-                    </div>
-                    <span class="article-editor__group-label">Paragraf</span>
-                </div>
-                <div class="article-editor__group article-editor__group--style" aria-label="Gaya teks">
-                    <label class="sr-only" for="body-editor-style">Pilih gaya teks</label>
-                    <select class="article-editor__style-select" id="body-editor-style" data-article-editor-format>
-                        <option value="p">Normal</option>
-                        <option value="h2">Judul 2</option>
-                        <option value="h3">Judul 3</option>
-                        <option value="h4">Judul 4</option>
-                        <option value="blockquote">Kutipan</option>
-                    </select>
-                    <span class="article-editor__group-label">Gaya</span>
-                </div>
-            </div>
-            <div class="article-editor__panel" id="body-panel-insert" role="tabpanel" aria-labelledby="body-tab-insert" data-article-editor-panel="insert" hidden>
-                <div class="article-editor__group" aria-label="Sisipkan elemen">
-                    <div class="article-editor__group-tools">
-                        <button class="article-editor__button article-editor__button--text" type="button" data-article-editor-command="createLink" aria-label="Sisipkan tautan" title="Sisipkan tautan">Tautan</button>
-                        <button class="article-editor__button article-editor__button--text" type="button" data-article-editor-command="insertHorizontalRule" aria-label="Sisipkan garis horizontal" title="Sisipkan garis horizontal">Garis horizontal</button>
-                    </div>
-                    <span class="article-editor__group-label">Sisipkan</span>
-                </div>
-            </div>
-            <p class="article-editor__shortcut-hint">Pintasan: Ctrl+B tebal · Ctrl+I miring · Ctrl+U garis bawah</p>
-        </div>
-        <div class="article-editor__workspace">
-            <div class="article-editor__surface" id="body-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="body-label" aria-describedby="body-help body-error" aria-required="true" data-article-editor-surface hidden></div>
-        </div>
-        <textarea class="mt-2 w-full border border-rule bg-white px-3 py-2 font-mono text-sm" id="body" name="body" rows="14" maxlength="50000" aria-describedby="body-help body-error" required data-article-editor-source>{{ old('body', $article?->body) }}</textarea>
-        <p class="article-editor__status mt-1 text-xs text-ink/60" id="body-error" aria-live="polite" data-article-editor-status hidden></p>
-        @error('body')<p class="mt-1 text-sm text-red-800" role="alert">{{ $message }}</p>@enderror
-        <p class="mt-1 text-xs text-ink/60" data-article-editor-count hidden></p>
+    <div class="md:col-span-2">
+        <x-admin.rich-text-editor
+            id="article-body"
+            name="body"
+            label="Isi artikel"
+            :value="$article?->body ?? ''"
+            :max-length="50000"
+            help-text="Gunakan toolbar untuk memformat tulisan. Konten berbahaya akan dibuang saat disimpan."
+        />
     </div>
     <div>
         <label class="block text-sm font-medium" for="status">Status</label>

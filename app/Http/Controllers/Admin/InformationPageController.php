@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SaveInformationPageRequest;
 use App\Models\SiteSetting;
 use App\Services\AdminAuditLogger;
+use App\Services\ArticleHtmlSanitizer;
 use App\Services\InformationalPageService;
 use App\Services\PublicSiteSettings;
 use Illuminate\Http\RedirectResponse;
@@ -34,14 +35,17 @@ class InformationPageController extends Controller
         string $page,
         InformationalPageService $pages,
         PublicSiteSettings $settings,
+        ArticleHtmlSanitizer $sanitizer,
     ): View {
         $definition = $pages->definition($page);
         abort_if($definition === null, 404);
+        $content = $pages->adminContent($page, $settings);
+        $content['content'] = $sanitizer->sanitize($content['content']);
 
         return view('admin.information-pages.edit', [
             'slug' => $page,
             'definition' => $definition,
-            'content' => $pages->adminContent($page, $settings),
+            'content' => $content,
         ]);
     }
 
@@ -49,16 +53,19 @@ class InformationPageController extends Controller
         string $page,
         InformationalPageService $pages,
         PublicSiteSettings $settings,
+        ArticleHtmlSanitizer $sanitizer,
     ): Response {
         $definition = $pages->definition($page);
         abort_if($definition === null, 404);
 
         $content = $pages->adminContent($page, $settings);
+        $content['content'] = $sanitizer->sanitize($content['content']);
         $view = view('pages.information', [
             'page' => $content,
             'pageSlug' => $page,
             'pageTitle' => $definition['title'].' — Pratinjau',
             'isPreview' => true,
+            'safeContent' => $content['content'],
         ]);
 
         return response($view->render(), 200, [
@@ -72,12 +79,14 @@ class InformationPageController extends Controller
         string $page,
         InformationalPageService $pages,
         AdminAuditLogger $audit,
+        ArticleHtmlSanitizer $sanitizer,
     ): RedirectResponse {
         $definition = $pages->definition($page);
         abort_if($definition === null, 404);
 
         $validated = $request->validated();
         $validated['content'] = $validated['content'] ?? '';
+        $validated['content'] = $sanitizer->sanitize($validated['content']);
         $key = $validated['action'] === 'publish'
             ? $definition['key']
             : 'draft_'.$definition['key'];
