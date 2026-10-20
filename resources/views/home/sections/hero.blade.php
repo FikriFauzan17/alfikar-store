@@ -20,7 +20,7 @@
     <div class="home-intro__copy">
         <p class="home-intro__eyebrow">{{ $siteName }}</p>
         @if ($featuredProduct)
-            <p class="mb-3 text-sm text-gold">Buku unggulan</p>
+            <p class="home-intro__label">Buku unggulan</p>
             <h1 id="home-title">{{ filled($homeCopy['home_hero_title'] ?? null) ? $homeCopy['home_hero_title'] : $featuredProduct->title }}</h1>
             <p class="home-intro__description">{{ filled($homeCopy['home_hero_description'] ?? null) ? $homeCopy['home_hero_description'] : $featuredProduct->author.' · '.$featuredProduct->publisher }}</p>
             @php
@@ -31,7 +31,16 @@
                     ? $homeCopy['home_hero_cta_label']
                     : 'Lihat detail buku';
             @endphp
-            <a class="mt-6 inline-flex border border-gold px-5 py-3 text-sm text-white hover:bg-white/10" href="{{ $heroCtaUrl }}" @if (str_starts_with($heroCtaUrl, 'https://')) target="_blank" rel="noopener noreferrer" @endif>{{ $heroCtaLabel }}</a>
+            <div class="home-intro__actions">
+                <a class="home-intro__action inline-flex" href="{{ $heroCtaUrl }}" @if (str_starts_with($heroCtaUrl, 'https://')) target="_blank" rel="noopener noreferrer" @endif>
+                    {{ $heroCtaLabel }}
+                    <span aria-hidden="true">→</span>
+                </a>
+                <a class="home-intro__secondary" href="{{ route('products.index') }}">
+                    Jelajahi katalog
+                    <span aria-hidden="true">→</span>
+                </a>
+            </div>
         @else
             <h1 id="home-title">{{ filled($homeCopy['home_hero_title'] ?? null) ? $homeCopy['home_hero_title'] : 'Buku untuk menemani pencarian ilmu.' }}</h1>
             <p class="home-intro__description">{{ filled($homeCopy['home_hero_description'] ?? null) ? $homeCopy['home_hero_description'] : 'Belum ada buku unggulan yang diterbitkan.' }}</p>
@@ -39,7 +48,10 @@
                 $heroCtaUrl = filled($homeCopy['home_hero_cta_url'] ?? null) ? $homeCopy['home_hero_cta_url'] : route('products.index');
                 $heroCtaLabel = filled($homeCopy['home_hero_cta_label'] ?? null) ? $homeCopy['home_hero_cta_label'] : 'Jelajahi katalog';
             @endphp
-            <a class="mt-6 inline-flex border border-gold px-5 py-3 text-sm text-white hover:bg-white/10" href="{{ $heroCtaUrl }}" @if (str_starts_with($heroCtaUrl, 'https://')) target="_blank" rel="noopener noreferrer" @endif>{{ $heroCtaLabel }}</a>
+            <a class="home-intro__action mt-6 inline-flex" href="{{ $heroCtaUrl }}" @if (str_starts_with($heroCtaUrl, 'https://')) target="_blank" rel="noopener noreferrer" @endif>
+                {{ $heroCtaLabel }}
+                <span aria-hidden="true">→</span>
+            </a>
         @endif
     </div>
     @if ($featuredProduct?->images->isNotEmpty())

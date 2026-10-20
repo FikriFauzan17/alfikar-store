@@ -3,7 +3,7 @@
     @if ($categories->isNotEmpty())
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             @foreach ($categories as $category)
-                <a class="group overflow-hidden border border-rule bg-white transition-colors hover:border-brand" href="{{ route('products.index', ['category' => $category->slug]) }}">
+                <a class="category-card group overflow-hidden border border-rule bg-white transition-colors hover:border-brand" href="{{ route('products.index', ['category' => $category->slug]) }}">
                     @php($categoryCover = $category->products->first()?->images->first())
                     @if ($category->image_path)
                         <img class="aspect-square w-full object-cover" src="{{ Storage::disk(config('image-processing.disk', 'public'))->url($category->image_path) }}" alt="" width="640" height="640" loading="lazy">

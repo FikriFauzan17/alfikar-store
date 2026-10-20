@@ -21,14 +21,15 @@
             <h1 class="font-display text-3xl text-brand-dark">Katalog buku</h1>
         </div>
 
-        <form class="mb-8 grid gap-3 border border-rule bg-white p-4 md:grid-cols-[minmax(0,1fr)_minmax(180px,0.6fr)_minmax(180px,0.6fr)_auto] md:items-end" method="GET" action="{{ route('products.index') }}">
-            <div>
-                <label class="block text-sm font-medium" for="catalog-q">Cari judul, penulis, penerbit, ISBN, atau kode</label>
-                <input class="mt-1 w-full border border-rule px-3 py-2" id="catalog-q" name="q" type="search" maxlength="120" value="{{ $filters['q'] ?? '' }}">
+        <form class="catalog-filters mb-8 grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(180px,0.6fr)_minmax(180px,0.6fr)_auto] md:items-end" method="GET" action="{{ route('products.index') }}">
+            <div class="catalog-filters__search">
+                <label class="catalog-filters__label" for="catalog-q">Cari buku</label>
+                <p class="catalog-filters__hint">Judul, penulis, penerbit, ISBN, atau kode</p>
+                <input class="catalog-filters__input mt-2 w-full" id="catalog-q" name="q" type="search" maxlength="120" value="{{ $filters['q'] ?? '' }}" placeholder="Contoh: judul atau nama penulis">
             </div>
             <div>
-                <label class="block text-sm font-medium" for="catalog-category">Kategori</label>
-                <select class="mt-1 w-full border border-rule bg-white px-3 py-2" id="catalog-category" name="category">
+                <label class="catalog-filters__label" for="catalog-category">Kategori</label>
+                <select class="catalog-filters__input mt-2 w-full bg-white" id="catalog-category" name="category">
                     <option value="">Semua kategori</option>
                     @foreach ($categories as $category)
                         <option value="{{ $category->slug }}" @selected(($filters['category'] ?? '') === $category->slug)>{{ $category->name }}</option>
@@ -36,8 +37,8 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium" for="catalog-sort">Urutkan</label>
-                <select class="mt-1 w-full border border-rule bg-white px-3 py-2" id="catalog-sort" name="sort">
+                <label class="catalog-filters__label" for="catalog-sort">Urutkan</label>
+                <select class="catalog-filters__input mt-2 w-full bg-white" id="catalog-sort" name="sort">
                     <option value="newest" @selected(($filters['sort'] ?? 'newest') === 'newest')>Terbaru</option>
                     <option value="title" @selected(($filters['sort'] ?? '') === 'title')>Judul A–Z</option>
                     <option value="price_asc" @selected(($filters['sort'] ?? '') === 'price_asc')>Harga terendah</option>
@@ -45,14 +46,17 @@
                 </select>
             </div>
             <div class="flex flex-wrap gap-3">
-                <button class="bg-brand px-5 py-2 text-sm text-white hover:bg-brand-dark" type="submit">Cari buku</button>
+                <button class="catalog-filters__submit" type="submit">Tampilkan buku</button>
                 @if ($filters !== [])
-                    <a class="inline-flex items-center text-sm text-brand-dark underline underline-offset-4" href="{{ route('products.index') }}">Hapus filter</a>
+                    <a class="catalog-filters__reset" href="{{ route('products.index') }}">Hapus filter</a>
                 @endif
             </div>
         </form>
 
-        <p class="mb-5 text-sm text-ink/60">{{ $products->total() }} buku</p>
+        <p class="catalog-results mb-5" role="status" aria-live="polite">
+            <strong>{{ number_format($products->total(), 0, ',', '.') }}</strong>
+            buku ditemukan
+        </p>
         @if ($products->isNotEmpty())
             <div class="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
                 @foreach ($products as $product)

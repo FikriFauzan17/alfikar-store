@@ -11,7 +11,7 @@
         </span>
     </a>
 
-    <details class="site-menu" open>
+    <details class="site-menu">
         <summary class="site-menu__trigger">Menu</summary>
         <nav class="site-nav" aria-label="Navigasi utama">
             <a href="{{ route('home') }}">Beranda</a>
