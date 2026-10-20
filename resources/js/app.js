@@ -21,6 +21,84 @@ if (siteHeader) {
 	window.addEventListener('scroll', syncHeaderScrollState, { passive: true });
 }
 
+const featuredCarousel = document.querySelector('[data-featured-carousel]');
+
+if (featuredCarousel instanceof HTMLElement) {
+	const slides = Array.from(featuredCarousel.querySelectorAll('[data-featured-slide]'));
+	const controls = featuredCarousel.querySelector('[data-featured-controls]');
+	const position = featuredCarousel.querySelector('[data-featured-position]');
+	const previousButton = featuredCarousel.querySelector('[data-featured-previous]');
+	const nextButton = featuredCarousel.querySelector('[data-featured-next]');
+	const rotationButton = featuredCarousel.querySelector('[data-featured-rotation]');
+	const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+	if (
+		slides.length > 1
+		&& controls instanceof HTMLElement
+		&& position instanceof HTMLElement
+		&& previousButton instanceof HTMLButtonElement
+		&& nextButton instanceof HTMLButtonElement
+		&& rotationButton instanceof HTMLButtonElement
+	) {
+		let activeIndex = 0;
+		let rotationTimer;
+		let rotationPaused = false;
+		const rotationInterval = 6000;
+
+		const updateRotationButton = () => {
+			rotationButton.hidden = reducedMotion.matches;
+			rotationButton.setAttribute('aria-pressed', String(rotationPaused));
+			rotationButton.textContent = rotationPaused ? 'Lanjutkan otomatis' : 'Jeda otomatis';
+			featuredCarousel.setAttribute('aria-live', rotationPaused || reducedMotion.matches ? 'polite' : 'off');
+		};
+
+		const stopRotation = () => {
+			window.clearInterval(rotationTimer);
+			rotationTimer = undefined;
+		};
+
+		const startRotation = () => {
+			stopRotation();
+
+			if (!reducedMotion.matches && !rotationPaused && document.visibilityState === 'visible') {
+				rotationTimer = window.setInterval(() => showSlide(activeIndex + 1), rotationInterval);
+			}
+		};
+
+		const showSlide = (index) => {
+			slides[activeIndex].hidden = true;
+			slides[activeIndex].classList.remove('is-entering');
+			activeIndex = (index + slides.length) % slides.length;
+			slides[activeIndex].hidden = false;
+			slides[activeIndex].classList.add('is-entering');
+			position.textContent = `${activeIndex + 1} / ${slides.length}`;
+			startRotation();
+		};
+
+		controls.hidden = false;
+		updateRotationButton();
+		startRotation();
+
+		previousButton.addEventListener('click', () => showSlide(activeIndex - 1));
+		nextButton.addEventListener('click', () => showSlide(activeIndex + 1));
+		rotationButton.addEventListener('click', () => {
+			rotationPaused = !rotationPaused;
+			updateRotationButton();
+			startRotation();
+		});
+		featuredCarousel.addEventListener('focusin', () => {
+			rotationPaused = true;
+			updateRotationButton();
+			stopRotation();
+		});
+		document.addEventListener('visibilitychange', startRotation);
+		reducedMotion.addEventListener('change', () => {
+			updateRotationButton();
+			startRotation();
+		});
+	}
+}
+
 const articleEditor = document.querySelector('[data-article-editor]');
 
 if (articleEditor instanceof HTMLElement) {

@@ -53,6 +53,44 @@ it('renders homepage sections in the documented order with honest empty states',
         ->toBeLessThan(strpos($body, 'latest-articles-title'));
 });
 
+it('renders published featured books as accessible hero carousel slides', function () {
+    $category = Category::factory()->create(['is_published' => true]);
+    createPublishedCatalogProduct($category, [
+        'title' => 'Buku Unggulan Pertama',
+        'is_featured' => true,
+        'published_at' => now()->subDay(),
+    ]);
+    createPublishedCatalogProduct($category, [
+        'title' => 'Buku Unggulan Kedua',
+        'is_featured' => true,
+        'published_at' => now()->subDays(2),
+    ]);
+    createPublishedCatalogProduct($category, [
+        'title' => 'Buku Biasa',
+        'is_featured' => false,
+    ]);
+    createPublishedCatalogProduct($category, [
+        'title' => 'Buku Unggulan Draft',
+        'is_featured' => true,
+        'is_published' => false,
+    ]);
+
+    $response = $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('data-featured-carousel', false)
+        ->assertSee('aria-roledescription="carousel"', false)
+        ->assertSee('aria-label="1 dari 2"', false)
+        ->assertSee('aria-label="2 dari 2" hidden', false)
+        ->assertSee('data-featured-previous', false)
+        ->assertSee('data-featured-next', false)
+        ->assertSee('data-featured-rotation', false)
+        ->assertSee('Buku Unggulan Pertama')
+        ->assertSee('Buku Unggulan Kedua')
+        ->assertDontSee('Buku Unggulan Draft');
+
+    expect(substr_count($response->getContent(), 'data-featured-slide'))->toBe(2);
+});
+
 it('shows only published products and articles in public sections', function () {
     $category = Category::factory()->create(['is_published' => true]);
     createPublishedCatalogProduct($category, [

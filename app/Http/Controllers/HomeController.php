@@ -102,14 +102,14 @@ class HomeController extends Controller
             'sort_order',
         ])->orderBy('sort_order');
 
-        $featuredProduct = Product::query()
+        $featuredProducts = Product::query()
             ->published()
             ->select($productColumns)
             ->with(['category:id,name,slug', 'images' => $imageLoader])
             ->where('is_featured', true)
             ->orderByDesc('published_at')
             ->orderByDesc('id')
-            ->first();
+            ->get();
 
         $categories = Category::query()
             ->select(['id', 'name', 'slug', 'description', 'image_path', 'sort_order'])
@@ -215,7 +215,7 @@ class HomeController extends Controller
         return view('home', [
             'banner' => $banner,
             'siteName' => $siteName,
-            'featuredProduct' => $featuredProduct,
+            'featuredProducts' => $featuredProducts,
             'categories' => $categories,
             'services' => $services,
             'bestsellers' => $bestsellers,
