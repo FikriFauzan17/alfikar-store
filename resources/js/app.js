@@ -457,7 +457,7 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 		const imageButton = toolbar.querySelector('[data-rich-text-command="image"]');
 		if (imageButton instanceof HTMLButtonElement) {
 			imageButton.disabled = true;
-			imageButton.textContent = 'Mengunggah gambar…';
+			imageButton.setAttribute('aria-busy', 'true');
 		}
 
 		status.textContent = 'Gambar sedang diunggah dan diproses…';
@@ -507,7 +507,7 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 
 			if (imageButton instanceof HTMLButtonElement) {
 				imageButton.disabled = false;
-				imageButton.textContent = 'Sisipkan gambar';
+				imageButton.removeAttribute('aria-busy');
 			}
 		}
 	});
