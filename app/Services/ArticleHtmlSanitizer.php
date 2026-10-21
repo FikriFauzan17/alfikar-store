@@ -10,7 +10,7 @@ use DOMNode;
 final class ArticleHtmlSanitizer
 {
     private const ALLOWED_ELEMENTS = [
-        'a', 'blockquote', 'br', 'code', 'del', 'em', 'h2', 'h3', 'h4', 'hr',
+        'a', 'blockquote', 'br', 'code', 'del', 'em', 'h2', 'h3', 'h4', 'hr', 'img',
         'i', 'li', 'ol', 'p', 'pre', 's', 'strong', 'u', 'ul',
     ];
 
@@ -73,23 +73,73 @@ final class ArticleHtmlSanitizer
             }
 
             $this->sanitizeAttributes($child, $tag);
+
+            if ($tag === 'img' && ! $child->hasAttribute('src')) {
+                $node->removeChild($child);
+
+                continue;
+            }
+
             $this->sanitizeChildren($child);
         }
     }
 
     private function sanitizeAttributes(DOMElement $element, string $tag): void
     {
-        $allowed = $tag === 'a' ? ['href', 'title'] : [];
+        $allowed = match ($tag) {
+            'a' => ['href', 'title'],
+            'img' => ['alt', 'src', 'title'],
+            'blockquote', 'h2', 'h3', 'h4', 'p' => ['style'],
+            default => [],
+        };
 
         foreach (iterator_to_array($element->attributes) as $attribute) {
-            if (! in_array(strtolower($attribute->name), $allowed, true)) {
+            $name = strtolower($attribute->name);
+
+            if (! in_array($name, $allowed, true)) {
                 $element->removeAttributeNode($attribute);
+
+                continue;
+            }
+
+            if ($name === 'style' && ! $this->sanitizeTextAlignment($element)) {
+                $element->removeAttribute('style');
             }
         }
 
         if ($tag === 'a' && $element->hasAttribute('href') && ! $this->isSafeLink($element->getAttribute('href'))) {
             $element->removeAttribute('href');
         }
+
+        if ($tag === 'img' && $element->hasAttribute('src') && ! $this->isSafeImageSource($element->getAttribute('src'))) {
+            $element->removeAttribute('src');
+        }
+    }
+
+    private function isSafeImageSource(string $url): bool
+    {
+        $url = trim($url);
+
+        if ($url === '' || preg_match('/[\x00-\x20]/', $url) === 1 || str_starts_with($url, '//')) {
+            return false;
+        }
+
+        if (str_starts_with($url, '/')) {
+            return true;
+        }
+
+        return in_array(strtolower((string) parse_url($url, PHP_URL_SCHEME)), ['http', 'https'], true);
+    }
+
+    private function sanitizeTextAlignment(DOMElement $element): bool
+    {
+        if (preg_match('/\A\s*text-align\s*:\s*(left|center|right|justify)\s*;?\s*\z/i', $element->getAttribute('style'), $matches) !== 1) {
+            return false;
+        }
+
+        $element->setAttribute('style', 'text-align: '.strtolower($matches[1]));
+
+        return true;
     }
 
     private function isSafeLink(string $url): bool

@@ -158,6 +158,63 @@ it('keeps scheduled articles private until their publication time', function () 
     $this->get(route('articles.show', $article->slug))->assertOk();
 });
 
+it('restricts rich-text image uploads and renders only sanitized images and alignment', function () {
+    if (! extension_loaded('gd') || ! function_exists('imagewebp') || ! function_exists('exif_read_data')) {
+        $this->markTestSkipped('GD with WebP and EXIF support is required for image processing tests.');
+    }
+
+    Storage::fake('public');
+    $uploadRoute = route('admin.rich-text.images.store');
+
+    $this->postJson($uploadRoute, [
+        'image' => UploadedFile::fake()->image('cover.png', 80, 60),
+    ])->assertUnauthorized();
+
+    $this->actingAs(User::factory()->create());
+    $this->postJson($uploadRoute, [
+        'image' => UploadedFile::fake()->image('cover.png', 80, 60),
+    ])->assertForbidden();
+
+    $this->actingAs(User::factory()->create(['is_admin' => true]));
+    $this->postJson($uploadRoute, [
+        'image' => UploadedFile::fake()->createWithContent('spoofed.png', 'not an image'),
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors('image');
+
+    $uploadResponse = $this->postJson($uploadRoute, [
+        'image' => UploadedFile::fake()->image('cover.png', 80, 60),
+    ])->assertCreated();
+    $imageUrl = $uploadResponse->json('url');
+    $storedImages = Storage::disk('public')->allFiles('rich-content/1');
+
+    expect($imageUrl)->toContain('/storage/rich-content/1/')
+        ->and($storedImages)->toHaveCount(1);
+    expect(Storage::disk('public')->exists($storedImages[0]))->toBeTrue();
+
+    $this->put(route('admin.information-pages.update', 'kebijakan-privasi'), [
+        'title' => 'Kebijakan Privasi',
+        'content' => '<p style="text-align: center" onclick="alert(1)">Lihat sampul <img src="'.$imageUrl.'" alt="Sampul halaman" onerror="alert(1)"></p><p style="color: red">Format berbahaya</p><img src="javascript:alert(1)" alt="Gambar tidak aman">',
+        'action' => 'publish',
+    ])->assertRedirect(route('admin.information-pages.index'));
+
+    $this->get(route('pages.information', 'kebijakan-privasi'))
+        ->assertOk()
+        ->assertSee('<p style="text-align: center">Lihat sampul <img src="'.$imageUrl.'" alt="Sampul halaman"></p>', false)
+        ->assertDontSee('onerror', false)
+        ->assertDontSee('javascript:', false)
+        ->assertDontSee('color: red', false);
+
+    $this->put(route('admin.information-pages.update', 'kebijakan-privasi'), [
+        'title' => 'Kebijakan Privasi',
+        'content' => '<img src="'.$imageUrl.'" alt="Sampul halaman">',
+        'action' => 'publish',
+    ])->assertRedirect(route('admin.information-pages.index'));
+
+    $this->get(route('pages.information', 'kebijakan-privasi'))
+        ->assertOk()
+        ->assertSee('<img src="'.$imageUrl.'" alt="Sampul halaman">', false);
+});
+
 it('rejects invalid publication schedules and unsafe site URLs without writing them', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $this->actingAs($admin);

@@ -32,15 +32,19 @@ class SaveInformationPageRequest extends FormRequest
                 }
 
                 $content = $this->input('content');
-                $plainContent = is_string($content)
+                $safeContent = is_string($content)
+                    ? app(ArticleHtmlSanitizer::class)->sanitize($content)
+                    : null;
+                $plainContent = is_string($safeContent)
                     ? preg_replace(
                         '/[\p{Z}\s]+/u',
                         '',
-                        html_entity_decode(strip_tags(app(ArticleHtmlSanitizer::class)->sanitize($content)), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                        html_entity_decode(strip_tags($safeContent), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
                     )
                     : null;
+                $hasImage = is_string($safeContent) && preg_match('/<img\b/i', $safeContent) === 1;
 
-                if ($this->input('action') === 'publish' && (! is_string($plainContent) || $plainContent === '')) {
+                if ($this->input('action') === 'publish' && (! is_string($plainContent) || $plainContent === '') && ! $hasImage) {
                     $validator->errors()->add('content', 'Isi halaman perlu dilengkapi sebelum dipublikasikan.');
                 }
             },

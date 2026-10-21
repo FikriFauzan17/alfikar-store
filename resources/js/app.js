@@ -1,4 +1,4 @@
-import { Editor } from '@tiptap/core';
+import { Editor, Extension, Node } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 
 const siteMenu = document.querySelector('.site-menu');
@@ -117,6 +117,58 @@ const isSafeEditorLink = (url) => {
 	return ['http', 'https', 'mailto'].includes(scheme);
 };
 
+const TextAlignment = Extension.create({
+	name: 'textAlignment',
+	addGlobalAttributes() {
+		return [{
+			types: ['blockquote', 'heading', 'paragraph'],
+			attributes: {
+				textAlign: {
+					default: null,
+					parseHTML: (element) => ['left', 'center', 'right', 'justify'].includes(element.style.textAlign)
+						? element.style.textAlign
+						: null,
+					renderHTML: ({ textAlign }) => ['left', 'center', 'right', 'justify'].includes(textAlign)
+						? { style: `text-align: ${textAlign}` }
+						: {},
+				},
+			},
+		}];
+	},
+	addCommands() {
+		return {
+			setTextAlign: (textAlign) => ({ commands }) => {
+				if (!['left', 'center', 'right', 'justify'].includes(textAlign)) {
+					return false;
+				}
+
+				return ['paragraph', 'heading', 'blockquote']
+					.some((type) => commands.updateAttributes(type, { textAlign }));
+			},
+		};
+	},
+});
+
+const RichTextImage = Node.create({
+	name: 'image',
+	group: 'block',
+	atom: true,
+	draggable: true,
+	addAttributes() {
+		return {
+			src: { default: null },
+			alt: { default: '' },
+			title: { default: null },
+		};
+	},
+	parseHTML() {
+		return [{ tag: 'img[src]' }];
+	},
+	renderHTML({ HTMLAttributes }) {
+		return ['img', HTMLAttributes];
+	},
+});
+
 document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 	if (!(editorRoot instanceof HTMLElement)) {
 		return;
@@ -127,8 +179,11 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 	const toolbar = editorRoot.querySelector('[data-rich-text-toolbar]');
 	const status = editorRoot.querySelector('[data-rich-text-status]');
 	const counter = editorRoot.querySelector('[data-rich-text-count]');
+	const formatSelect = editorRoot.querySelector('[data-rich-text-format]');
+	const imageInput = editorRoot.querySelector('[data-rich-text-image-input]');
 	const form = editorRoot.closest('form');
 	const maxLength = Number(editorRoot.dataset.richTextMaxLength);
+	const imageUploadUrl = editorRoot.dataset.richTextImageUploadUrl;
 
 	if (
 		!(source instanceof HTMLTextAreaElement)
@@ -136,7 +191,10 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 		|| !(toolbar instanceof HTMLElement)
 		|| !(status instanceof HTMLElement)
 		|| !(counter instanceof HTMLElement)
+		|| !(formatSelect instanceof HTMLSelectElement)
+		|| !(imageInput instanceof HTMLInputElement)
 		|| !(form instanceof HTMLFormElement)
+		|| !imageUploadUrl
 		|| !Number.isInteger(maxLength)
 		|| maxLength < 1
 	) {
@@ -144,6 +202,7 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 	}
 
 	const isRequired = source.required;
+	const editorContent = (currentEditor) => currentEditor.isEmpty ? '' : currentEditor.getHTML();
 	const updateToolbar = (editor) => {
 		const commands = {
 			bold: editor.isActive('bold'),
@@ -157,6 +216,18 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 			blockquote: editor.isActive('blockquote'),
 			bulletList: editor.isActive('bulletList'),
 			orderedList: editor.isActive('orderedList'),
+			alignLeft: editor.isActive('paragraph', { textAlign: 'left' })
+				|| editor.isActive('heading', { textAlign: 'left' })
+				|| editor.isActive('blockquote', { textAlign: 'left' }),
+			alignCenter: editor.isActive('paragraph', { textAlign: 'center' })
+				|| editor.isActive('heading', { textAlign: 'center' })
+				|| editor.isActive('blockquote', { textAlign: 'center' }),
+			alignRight: editor.isActive('paragraph', { textAlign: 'right' })
+				|| editor.isActive('heading', { textAlign: 'right' })
+				|| editor.isActive('blockquote', { textAlign: 'right' }),
+			alignJustify: editor.isActive('paragraph', { textAlign: 'justify' })
+				|| editor.isActive('heading', { textAlign: 'justify' })
+				|| editor.isActive('blockquote', { textAlign: 'justify' }),
 		};
 
 		toolbar.querySelectorAll('[data-rich-text-command][aria-pressed]').forEach((button) => {
@@ -165,9 +236,23 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 			}
 
 			const command = button.dataset.richTextCommand;
-			const key = command === 'heading' ? `heading${button.dataset.richTextLevel}` : command;
+			const key = command === 'heading'
+				? `heading${button.dataset.richTextLevel}`
+				: command === 'align'
+					? `align${button.dataset.richTextAlignment[0].toUpperCase()}${button.dataset.richTextAlignment.slice(1)}`
+					: command;
 			button.setAttribute('aria-pressed', String(commands[key] ?? false));
 		});
+
+		formatSelect.value = editor.isActive('heading', { level: 2 })
+			? 'heading-2'
+			: editor.isActive('heading', { level: 3 })
+				? 'heading-3'
+				: editor.isActive('heading', { level: 4 })
+					? 'heading-4'
+					: editor.isActive('blockquote')
+						? 'blockquote'
+						: 'paragraph';
 	};
 
 	const editor = new Editor({
@@ -183,6 +268,8 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 					isAllowedUri: isSafeEditorLink,
 				},
 			}),
+			TextAlignment,
+			RichTextImage,
 		],
 		editorProps: {
 			attributes: {
@@ -195,9 +282,10 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 			},
 		},
 		onUpdate: ({ editor: updatedEditor }) => {
-			source.value = updatedEditor.getText().trim() === '' ? '' : updatedEditor.getHTML();
+			source.value = editorContent(updatedEditor);
 			counter.textContent = `${updatedEditor.getText().length.toLocaleString('id-ID')} / ${maxLength.toLocaleString('id-ID')} karakter`;
 			status.hidden = true;
+			status.classList.remove('is-success');
 			updateToolbar(updatedEditor);
 		},
 		onSelectionUpdate: ({ editor: updatedEditor }) => updateToolbar(updatedEditor),
@@ -208,7 +296,7 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 	surface.hidden = false;
 	toolbar.hidden = false;
 	counter.hidden = false;
-	source.value = editor.getText().trim() === '' ? '' : editor.getHTML();
+	source.value = editorContent(editor);
 	counter.textContent = `${editor.getText().length.toLocaleString('id-ID')} / ${maxLength.toLocaleString('id-ID')} karakter`;
 	updateToolbar(editor);
 
@@ -265,8 +353,20 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 			case 'orderedList':
 				chain.toggleOrderedList().run();
 				break;
+			case 'indent':
+				chain.sinkListItem('listItem').run();
+				break;
+			case 'outdent':
+				chain.liftListItem('listItem').run();
+				break;
+			case 'align':
+				chain.setTextAlign(button.dataset.richTextAlignment).run();
+				break;
 			case 'horizontalRule':
 				chain.setHorizontalRule().run();
+				break;
+			case 'clearFormatting':
+				chain.clearNodes().unsetAllMarks().run();
 				break;
 			case 'undo':
 				chain.undo().run();
@@ -275,6 +375,13 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 				chain.redo().run();
 				break;
 			case 'link': {
+				if (editor.state.selection.empty) {
+					status.textContent = 'Pilih teks yang ingin dijadikan tautan terlebih dahulu.';
+					status.classList.remove('is-success');
+					status.hidden = false;
+					return;
+				}
+
 				const url = window.prompt('Masukkan URL tautan');
 				if (url === null) {
 					return;
@@ -282,6 +389,7 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 
 				if (!isSafeEditorLink(url)) {
 					status.textContent = 'Gunakan tautan relatif, HTTP, HTTPS, atau email yang aman.';
+					status.classList.remove('is-success');
 					status.hidden = false;
 					return;
 				}
@@ -292,19 +400,129 @@ document.querySelectorAll('[data-rich-text-editor]').forEach((editorRoot) => {
 			case 'unlink':
 				chain.extendMarkRange('link').unsetLink().run();
 				break;
+			case 'image': {
+				const altText = window.prompt(
+					'Tulis keterangan singkat gambar (teks alternatif). Boleh kosong jika gambar hanya hiasan.',
+					'',
+				);
+
+				if (altText === null) {
+					return;
+				}
+
+				imageInput.dataset.altText = altText;
+				imageInput.click();
+				break;
+			}
+		}
+	});
+
+	formatSelect.addEventListener('change', () => {
+		const chain = editor.chain().focus();
+
+		switch (formatSelect.value) {
+			case 'heading-2':
+				chain.setHeading({ level: 2 }).run();
+				break;
+			case 'heading-3':
+				chain.setHeading({ level: 3 }).run();
+				break;
+			case 'heading-4':
+				chain.setHeading({ level: 4 }).run();
+				break;
+			case 'blockquote':
+				chain.setBlockquote().run();
+				break;
+			default:
+				chain.setParagraph().run();
+		}
+	});
+
+	imageInput.addEventListener('change', async () => {
+		const image = imageInput.files?.[0];
+
+		if (!image) {
+			return;
+		}
+
+		const csrfToken = form.querySelector('input[name="_token"]');
+		if (!(csrfToken instanceof HTMLInputElement)) {
+			status.textContent = 'Token keamanan form tidak ditemukan. Muat ulang halaman, lalu coba lagi.';
+			status.classList.remove('is-success');
+			status.hidden = false;
+			imageInput.value = '';
+			return;
+		}
+
+		const imageButton = toolbar.querySelector('[data-rich-text-command="image"]');
+		if (imageButton instanceof HTMLButtonElement) {
+			imageButton.disabled = true;
+			imageButton.textContent = 'Mengunggah gambar…';
+		}
+
+		status.textContent = 'Gambar sedang diunggah dan diproses…';
+		status.classList.remove('is-success');
+		status.hidden = false;
+		const body = new FormData();
+		body.append('image', image);
+
+		try {
+			const response = await fetch(imageUploadUrl, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'X-CSRF-TOKEN': csrfToken.value,
+				},
+				body,
+				credentials: 'same-origin',
+			});
+			let result;
+
+			try {
+				result = await response.json();
+			} catch {
+				throw new Error(`Gambar gagal diunggah (kode ${response.status}). Muat ulang halaman jika sesi sudah berakhir.`);
+			}
+
+			if (!response.ok || typeof result.url !== 'string') {
+				throw new Error(result.errors?.image?.[0] ?? result.message ?? 'Gambar gagal diunggah. Silakan coba lagi.');
+			}
+
+			editor.chain().focus().insertContent({
+				type: 'image',
+				attrs: { src: result.url, alt: imageInput.dataset.altText ?? '' },
+			}).run();
+			status.textContent = 'Gambar berhasil disisipkan. Perubahan akan tersimpan saat Anda menyimpan konten.';
+			status.classList.add('is-success');
+			status.hidden = false;
+		} catch (error) {
+			status.textContent = error instanceof Error
+				? error.message
+				: 'Gambar gagal diunggah. Periksa koneksi, lalu coba lagi.';
+			status.classList.remove('is-success');
+			status.hidden = false;
+		} finally {
+			imageInput.value = '';
+			delete imageInput.dataset.altText;
+
+			if (imageButton instanceof HTMLButtonElement) {
+				imageButton.disabled = false;
+				imageButton.textContent = 'Sisipkan gambar';
+			}
 		}
 	});
 
 	form.addEventListener('submit', (event) => {
-		source.value = editor.getText().trim() === '' ? '' : editor.getHTML();
-		const hasText = editor.getText().trim() !== '';
+		source.value = editorContent(editor);
+		const hasContent = !editor.isEmpty;
 		const exceedsLimit = source.value.length > maxLength || editor.getText().length > maxLength;
 
-		if ((isRequired && !hasText) || exceedsLimit) {
+		if ((isRequired && !hasContent) || exceedsLimit) {
 			event.preventDefault();
 			status.textContent = exceedsLimit
 				? `Konten melebihi batas ${maxLength.toLocaleString('id-ID')} karakter.`
-				: 'Konten belum diisi.';
+				: 'Konten belum diisi. Tambahkan teks atau gambar terlebih dahulu.';
+			status.classList.remove('is-success');
 			status.hidden = false;
 			editor.commands.focus();
 		}

@@ -44,7 +44,10 @@ it('sanitizes rich text drafts and renders a private no-store preview', function
     $this->get(route('admin.information-pages.edit', 'kebijakan-privasi'))
         ->assertOk()
         ->assertSee('data-rich-text-editor', false)
-        ->assertSee('data-rich-text-toolbar', false);
+        ->assertSee('data-rich-text-toolbar', false)
+        ->assertSee('data-rich-text-format', false)
+        ->assertSee('data-rich-text-command="image"', false)
+        ->assertSee('/admin/rich-text/images', false);
 
     $preview = $this->get(route('admin.information-pages.preview', 'kebijakan-privasi'));
     $preview->assertOk()

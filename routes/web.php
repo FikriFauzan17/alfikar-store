@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\InformationPageController as AdminInformationPage
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductImageController;
 use App\Http\Controllers\Admin\ProductStatisticsController;
+use App\Http\Controllers\Admin\RichTextImageController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\StockAdjustmentController;
 use App\Http\Controllers\Admin\UserController;
@@ -55,6 +56,9 @@ Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->name('admin.')
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('/statistics/products', ProductStatisticsController::class)->name('statistics.products');
     Route::get('/information-pages', [AdminInformationPageController::class, 'index'])->name('information-pages.index');
+    Route::post('/rich-text/images', [RichTextImageController::class, 'store'])
+        ->middleware('throttle:product-images')
+        ->name('rich-text.images.store');
     Route::get('/information-pages/{page}', [AdminInformationPageController::class, 'edit'])
         ->whereIn('page', ['kebijakan-privasi', 'ketentuan-pemesanan'])
         ->name('information-pages.edit');

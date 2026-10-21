@@ -25,7 +25,7 @@
         <article class="mx-auto max-w-3xl">
             <p class="text-sm text-brand">Informasi Alfikar</p>
             <h1 class="mt-2 font-display text-3xl text-brand-dark md:text-4xl">{{ $page['title'] }}</h1>
-            @if (trim(strip_tags($safeContent)) === '')
+            @if (trim(strip_tags($safeContent)) === '' && ! str_contains($safeContent, '<img '))
                 <div class="mt-6 border border-gold bg-ivory p-5 text-sm leading-7 text-brand-dark">
                     Konten halaman ini belum tersedia.
                 </div>

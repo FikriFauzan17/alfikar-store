@@ -40,7 +40,7 @@ final class ProductImageProcessor
 
     public function storeContentImage(string $directory, UploadedFile $upload): string
     {
-        if (! preg_match('/\A(?:(?:articles|banners|categories)\/[1-9]\d*|site\/1)\z/', $directory)) {
+        if (! preg_match('/\A(?:(?:articles|banners|categories)\/[1-9]\d*|rich-content\/1|site\/1)\z/', $directory)) {
             throw new LogicException('The content image directory is invalid.');
         }
 
@@ -93,7 +93,7 @@ final class ProductImageProcessor
         }
 
         if (
-            ! preg_match('/\A(?:(?:articles|banners|categories)\/[1-9]\d*|site\/1)\z/', $directory)
+            ! preg_match('/\A(?:(?:articles|banners|categories)\/[1-9]\d*|rich-content\/1|site\/1)\z/', $directory)
             || ! preg_match('/\A'.preg_quote($directory, '/').'\/[0-9a-f-]{36}\.webp\z/i', $path)
         ) {
             throw new LogicException('The content image path is outside its managed resource directory.');
