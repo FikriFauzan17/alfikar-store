@@ -9,9 +9,9 @@
 
 <article class="book-card min-w-0">
     <a class="group block" href="{{ route('products.show', ['product' => $product->slug]) }}">
-        <div class="book-card__cover aspect-[2/3] overflow-hidden border border-rule bg-ivory">
+        <div class="book-card__cover overflow-hidden border border-rule bg-ivory" style="aspect-ratio: {{ $cover?->width ?? 2 }} / {{ $cover?->height ?? 3 }}">
             @if ($cover)
-                <img class="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.02]" src="{{ Storage::disk($cover->disk)->url($cover->variants[320] ?? $cover->path) }}" srcset="{{ $srcSet }}" sizes="(max-width: 700px) 45vw, (max-width: 1100px) 30vw, 22vw" width="{{ $cover->width }}" height="{{ $cover->height }}" alt="{{ $cover->alt_text }}" loading="lazy">
+                <img class="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]" src="{{ Storage::disk($cover->disk)->url($cover->variants[320] ?? $cover->path) }}" srcset="{{ $srcSet }}" sizes="(max-width: 700px) 45vw, (max-width: 1100px) 30vw, 22vw" width="{{ $cover->width }}" height="{{ $cover->height }}" alt="{{ $cover->alt_text }}" loading="lazy">
             @else
                 <div class="flex h-full items-center justify-center px-4 text-center text-xs text-ink/50">Sampul belum tersedia</div>
             @endif
