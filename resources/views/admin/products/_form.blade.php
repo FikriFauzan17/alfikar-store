@@ -65,6 +65,20 @@
         <label class="block text-sm font-medium" for="specifications_json">Spesifikasi (JSON)</label>
         <textarea class="mt-1 w-full border border-rule bg-white px-3 py-2 font-mono text-sm" id="specifications_json" name="specifications_json" rows="5">{{ old('specifications_json', $product?->specifications ? json_encode($product->specifications, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : '') }}</textarea>
     </div>
+    @if (! $product)
+        <div class="border border-rule bg-white p-4 md:col-span-2" data-product-create-gallery data-image-limit="{{ config('image-processing.max_images') }}">
+            <label class="block text-sm font-medium" for="product_images">Galeri foto produk</label>
+            <input class="mt-2 block w-full text-sm" id="product_images" name="images[]" type="file" accept="image/jpeg,image/png,image/webp" multiple data-product-create-gallery-input>
+            <p class="mt-2 text-xs text-ink/60">JPEG, PNG, atau WebP. Pilih hingga {{ config('image-processing.max_images') }} foto; ukuran tiap file maksimal {{ number_format(config('image-processing.max_upload_bytes') / 1024 / 1024, 1) }} MiB. Foto pertama akan menjadi foto utama.</p>
+            <p class="mt-2 text-sm text-brand-dark" data-product-create-gallery-count aria-live="polite">0 / {{ config('image-processing.max_images') }} foto dipilih</p>
+            <div class="product-image-preview-list mt-4 grid gap-3" data-product-create-gallery-previews aria-live="polite"></div>
+            @foreach ($errors->getMessages() as $key => $messages)
+                @if ($key === 'images' || str_starts_with($key, 'images.'))
+                    <p class="mt-2 text-sm text-red-800">{{ $messages[0] }}</p>
+                @endif
+            @endforeach
+        </div>
+    @endif
     <div>
         <label class="block text-sm font-medium" for="meta_title">SEO title</label>
         <input class="mt-1 w-full border border-rule bg-white px-3 py-2" id="meta_title" name="meta_title" value="{{ old('meta_title', $product?->meta_title) }}" maxlength="255">

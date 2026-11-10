@@ -59,6 +59,7 @@ class SaveProductRequest extends FormRequest
         $attributes = $this->validated();
         $publicationAction = $attributes['publication_action'] ?? null;
         unset($attributes['publication_action']);
+        unset($attributes['images']);
         $specificationsJson = $attributes['specifications_json'] ?? null;
         unset($attributes['specifications_json']);
 
@@ -132,6 +133,7 @@ class SaveProductRequest extends FormRequest
         $slugConstraint = Rule::unique('products', 'slug');
         $redirectSlugConstraint = Rule::unique('product_slug_redirects', 'slug');
         $uniqueIsbn = Rule::unique('products', 'isbn');
+        $maxImageKilobytes = (int) ceil(((int) config('image-processing.max_upload_bytes', 5 * 1024 * 1024)) / 1024);
 
         if ($product instanceof Product) {
             $uniqueCode->ignore($product->getKey());
@@ -163,6 +165,12 @@ class SaveProductRequest extends FormRequest
             'publication_action' => ['nullable', Rule::in(['draft', 'publish'])],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],
+            'images' => $product instanceof Product
+                ? ['exclude']
+                : ['nullable', 'array', 'max:'.(int) config('image-processing.max_images', 5)],
+            'images.*' => $product instanceof Product
+                ? ['exclude']
+                : ['required', 'file', 'mimes:jpeg,jpg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:'.$maxImageKilobytes],
         ];
     }
 }

@@ -14,7 +14,9 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Throwable;
 
 class ProductController extends Controller
 {
@@ -59,14 +61,41 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(SaveProductRequest $request, AdminAuditLogger $audit): RedirectResponse
-    {
-        $product = DB::transaction(function () use ($request, $audit): Product {
-            $product = Product::query()->create($request->productAttributes());
-            $audit->record($request->user(), 'product.created', $product);
+    public function store(
+        SaveProductRequest $request,
+        ProductImageProcessor $imageProcessor,
+        AdminAuditLogger $audit,
+    ): RedirectResponse {
+        $storedImages = [];
 
-            return $product;
-        });
+        try {
+            $product = DB::transaction(function () use ($request, $imageProcessor, $audit, &$storedImages): Product {
+                $product = Product::query()->create($request->productAttributes());
+
+                foreach ($request->file('images', []) ?? [] as $upload) {
+                    $image = $imageProcessor->storeFor($product, $upload);
+                    $storedImages[] = $image;
+                    $audit->record($request->user(), 'product.image.uploaded', $image);
+                }
+
+                $audit->record($request->user(), 'product.created', $product);
+
+                return $product;
+            });
+        } catch (Throwable $exception) {
+            foreach (array_reverse($storedImages) as $image) {
+                try {
+                    $imageProcessor->delete($image);
+                } catch (Throwable) {
+                    Log::warning('Failed to roll back product images after product creation failed.', [
+                        'product_id' => $image->product_id,
+                        'image_id' => $image->getKey(),
+                    ]);
+                }
+            }
+
+            throw $exception;
+        }
 
         return redirect()->route('admin.products.edit', $product)->with('status', 'Produk berhasil dibuat.');
     }

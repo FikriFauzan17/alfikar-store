@@ -272,6 +272,77 @@ it('creates and updates product inventory, pricing, publication and admin flags'
     $this->assertDatabaseHas('audit_logs', ['event' => 'product.updated', 'subject_id' => $product->id]);
 });
 
+it('creates a product with its initial gallery in one submission', function () {
+    if (! extension_loaded('gd') || ! function_exists('imagewebp') || ! function_exists('exif_read_data')) {
+        $this->markTestSkipped('GD with WebP and EXIF support is required for image processing tests.');
+    }
+
+    Storage::fake('public');
+    $admin = User::factory()->create(['is_admin' => true]);
+    $category = Category::factory()->create();
+    $this->actingAs($admin);
+
+    $this->get(route('admin.products.create'))
+        ->assertOk()
+        ->assertSee('Galeri foto produk')
+        ->assertSee('data-product-create-gallery', false);
+
+    $this->post(route('admin.products.store'), adminCatalogProductPayload($category, [
+        'images' => [makeAdminCatalogPngUpload(), makeAdminCatalogPngUpload(80, 100)],
+    ]))->assertRedirect(route('admin.products.edit', Product::query()->where('code', 'BK-ALF-0001')->first()));
+
+    $product = Product::query()->where('code', 'BK-ALF-0001')->firstOrFail();
+    $images = $product->images()->orderBy('sort_order')->get();
+
+    expect($images)->toHaveCount(2)
+        ->and($images->pluck('sort_order')->all())->toBe([0, 1])
+        ->and($images->first()->alt_text)->toBe($product->title)
+        ->and(Storage::disk('public')->allFiles())->not->toBeEmpty();
+    $this->assertDatabaseHas('audit_logs', ['event' => 'product.created', 'subject_id' => $product->id]);
+    $this->assertDatabaseCount('audit_logs', 3);
+    $this->assertModelExists($product);
+});
+
+it('rejects a product gallery over the photo limit without creating a product', function () {
+    $admin = User::factory()->create(['is_admin' => true]);
+    $category = Category::factory()->create();
+    $this->actingAs($admin);
+
+    $this->from(route('admin.products.create'))
+        ->post(route('admin.products.store'), adminCatalogProductPayload($category, [
+            'images' => array_fill(0, 6, UploadedFile::fake()->createWithContent('cover.png', 'not an image')),
+        ]))
+        ->assertRedirect(route('admin.products.create'))
+        ->assertSessionHasErrors('images');
+
+    $this->assertDatabaseCount('products', 0);
+    $this->assertDatabaseCount('audit_logs', 0);
+});
+
+it('rolls back a new product and earlier photos when gallery processing fails', function () {
+    if (! extension_loaded('gd') || ! function_exists('imagewebp') || ! function_exists('exif_read_data')) {
+        $this->markTestSkipped('GD with WebP and EXIF support is required for image processing tests.');
+    }
+
+    Storage::fake('public');
+    $admin = User::factory()->create(['is_admin' => true]);
+    $category = Category::factory()->create();
+    $this->actingAs($admin);
+    config(['image-processing.max_pixels' => 4000]);
+
+    $this->from(route('admin.products.create'))
+        ->post(route('admin.products.store'), adminCatalogProductPayload($category, [
+            'images' => [makeAdminCatalogPngUpload(40, 50), makeAdminCatalogPngUpload(80, 100)],
+        ]))
+        ->assertRedirect(route('admin.products.create'))
+        ->assertSessionHasErrors('image');
+
+    $this->assertDatabaseCount('products', 0);
+    $this->assertDatabaseCount('product_images', 0);
+    $this->assertDatabaseCount('audit_logs', 0);
+    expect(Storage::disk('public')->allFiles())->toBe([]);
+});
+
 it('rejects invalid wholesale pairs and duplicate product codes or slugs', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $category = Category::factory()->create();

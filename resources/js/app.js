@@ -1004,3 +1004,61 @@ if (productImageUploadForm instanceof HTMLFormElement) {
 		window.addEventListener('pagehide', releasePreviewUrls, { once: true });
 	}
 }
+
+const productCreateGallery = document.querySelector('[data-product-create-gallery]');
+
+if (productCreateGallery instanceof HTMLElement) {
+	const imageInput = productCreateGallery.querySelector('[data-product-create-gallery-input]');
+	const previewList = productCreateGallery.querySelector('[data-product-create-gallery-previews]');
+	const selectedCount = productCreateGallery.querySelector('[data-product-create-gallery-count]');
+	const imageLimit = Number.parseInt(productCreateGallery.dataset.imageLimit ?? '5', 10);
+	let previewUrls = [];
+
+	const releasePreviewUrls = () => {
+		previewUrls.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+		previewUrls = [];
+	};
+
+	if (
+		imageInput instanceof HTMLInputElement
+		&& previewList instanceof HTMLElement
+		&& selectedCount instanceof HTMLElement
+	) {
+		imageInput.addEventListener('change', () => {
+			releasePreviewUrls();
+			previewList.replaceChildren();
+
+			const files = Array.from(imageInput.files ?? []);
+			selectedCount.textContent = `${files.length} / ${imageLimit} foto dipilih`;
+
+			files.forEach((file) => {
+				const card = document.createElement('article');
+				card.className = 'product-image-preview';
+
+				const image = document.createElement('img');
+				image.className = 'product-image-preview__image';
+				image.alt = '';
+				image.loading = 'lazy';
+				image.decoding = 'async';
+				image.src = URL.createObjectURL(file);
+				previewUrls.push(image.src);
+
+				const details = document.createElement('div');
+				details.className = 'product-image-preview__details';
+
+				const fileName = document.createElement('p');
+				fileName.className = 'font-semibold text-brand-dark';
+				fileName.textContent = file.name;
+
+				const fileSize = document.createElement('p');
+				fileSize.textContent = `${(file.size / 1024).toFixed(1)} KiB`;
+
+				details.append(fileName, fileSize);
+				card.append(image, details);
+				previewList.append(card);
+			});
+		});
+
+		window.addEventListener('pagehide', releasePreviewUrls);
+	}
+}
