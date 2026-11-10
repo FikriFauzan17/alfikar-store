@@ -103,6 +103,9 @@ class SaveProductRequest extends FormRequest
         if ($publicationAction === 'draft') {
             $attributes['is_published'] = false;
             $attributes['published_at'] = null;
+        } elseif ($publicationAction === 'publish_now') {
+            $attributes['is_published'] = true;
+            $attributes['published_at'] = now();
         } elseif ($publicationAction === 'publish') {
             $attributes['is_published'] = true;
         }
@@ -193,7 +196,7 @@ class SaveProductRequest extends FormRequest
             'is_bestseller' => ['required', 'boolean'],
             'published_at' => ['nullable', 'date'],
             'published_at_timezone_offset' => ['nullable', 'integer', 'between:-840,840'],
-            'publication_action' => ['nullable', Rule::in(['draft', 'publish'])],
+            'publication_action' => ['nullable', Rule::in(['draft', 'publish', 'publish_now'])],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],
             'images' => $product instanceof Product

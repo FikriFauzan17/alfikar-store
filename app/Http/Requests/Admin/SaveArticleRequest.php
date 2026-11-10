@@ -44,6 +44,9 @@ class SaveArticleRequest extends FormRequest
         if ($this->input('publication_action') === 'draft') {
             $attributes['status'] = ArticleStatus::Draft->value;
             $attributes['published_at'] = null;
+        } elseif ($this->input('publication_action') === 'publish_now') {
+            $attributes['status'] = ArticleStatus::Published->value;
+            $attributes['published_at'] = now();
         } elseif ($this->input('publication_action') === 'publish') {
             $attributes['status'] = ArticleStatus::Published->value;
         }
@@ -90,7 +93,7 @@ class SaveArticleRequest extends FormRequest
             'body' => ['required', 'string', 'max:50000'],
             'status' => ['required', Rule::enum(ArticleStatus::class)],
             'published_at' => ['nullable', 'date'],
-            'publication_action' => ['nullable', Rule::in(['draft', 'publish'])],
+            'publication_action' => ['nullable', Rule::in(['draft', 'publish', 'publish_now'])],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'image_alt' => ['nullable', 'string', 'max:255'],
             'remove_image' => ['required', 'boolean'],

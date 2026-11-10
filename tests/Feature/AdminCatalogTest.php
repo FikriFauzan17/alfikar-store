@@ -77,12 +77,15 @@ it('creates, updates, lists, confirms and deletes categories', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $this->actingAs($admin);
 
-    $this->get(route('admin.categories.create'))->assertOk();
+    $this->get(route('admin.categories.create'))
+        ->assertOk()
+        ->assertSee('Publikasikan sekarang');
     $this->post(route('admin.categories.store'), [
         'name' => 'Bahasa Arab',
         'description' => 'Kategori pilihan.',
         'sort_order' => 2,
-        'is_published' => '1',
+        'is_published' => '0',
+        'publication_action' => 'publish_now',
     ])->assertRedirect(route('admin.categories.index'));
 
     $category = Category::query()->where('slug', 'bahasa-arab')->firstOrFail();
@@ -274,6 +277,32 @@ it('creates and updates product inventory, pricing, publication and admin flags'
         ->and($product->is_featured)->toBeFalse()
         ->and($product->is_bestseller)->toBeTrue();
     $this->assertDatabaseHas('audit_logs', ['event' => 'product.updated', 'subject_id' => $product->id]);
+});
+
+it('publishes a product immediately when the publish now action is selected', function () {
+    $this->travelTo('2026-11-10 03:30:00');
+    $admin = User::factory()->create(['is_admin' => true]);
+    $category = Category::factory()->create(['is_published' => true]);
+    $this->actingAs($admin);
+
+    $this->get(route('admin.products.create'))
+        ->assertOk()
+        ->assertSee('name="publication_action" value="publish_now">Publikasikan sekarang', false);
+    $this->post(route('admin.products.store'), adminCatalogProductPayload($category, [
+        'is_published' => '0',
+        'is_featured' => '0',
+        'is_bestseller' => '0',
+        'published_at' => '2026-11-10T10:26',
+        'publication_action' => 'publish_now',
+    ]))->assertRedirect(route('admin.products.edit', Product::query()->where('code', 'BK-ALF-0001')->first()));
+
+    $product = Product::query()->where('code', 'BK-ALF-0001')->firstOrFail();
+    $this->assertDatabaseHas('products', [
+        'id' => $product->id,
+        'is_published' => true,
+        'published_at' => '2026-11-10 03:30:00',
+    ]);
+    $this->get(route('home'))->assertOk()->assertSee('Buku Pilihan Alfikar');
 });
 
 it('creates a product with its initial gallery in one submission', function () {

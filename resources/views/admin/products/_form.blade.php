@@ -100,6 +100,7 @@
     <button class="bg-brand px-5 py-2 text-sm text-white hover:bg-brand-dark" type="submit">{{ $product ? 'Simpan perubahan' : 'Simpan produk' }}</button>
     <button class="border border-brand px-5 py-2 text-sm text-brand-dark hover:bg-ivory" type="submit" name="publication_action" value="draft">Simpan Draft</button>
     <button class="bg-brand-dark px-5 py-2 text-sm text-white hover:bg-brand" type="submit" name="publication_action" value="publish">Publikasikan</button>
+    <button class="bg-brand px-5 py-2 text-sm text-white hover:bg-brand-dark" type="submit" name="publication_action" value="publish_now">Publikasikan sekarang</button>
     <a class="border border-rule px-5 py-2 text-sm" href="{{ route('admin.products.index') }}">Batal</a>
 </div>
 @if ($product)

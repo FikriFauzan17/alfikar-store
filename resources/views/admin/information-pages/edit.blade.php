@@ -46,7 +46,7 @@
             <div class="mt-6 flex flex-wrap gap-3">
                 <button class="admin-button admin-button--quiet" type="submit" name="action" value="draft">Simpan Draft</button>
                 <a class="admin-button admin-button--quiet" href="{{ route('admin.information-pages.preview', ['page' => $slug]) }}" target="_blank" rel="noopener">Pratinjau</a>
-                <button class="admin-button admin-button--primary" type="submit" name="action" value="publish">Publikasikan</button>
+                <button class="admin-button admin-button--primary" type="submit" name="action" value="publish">Publikasikan sekarang</button>
             </div>
         </form>
     </section>

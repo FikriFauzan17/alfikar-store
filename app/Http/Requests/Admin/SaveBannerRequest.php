@@ -26,6 +26,13 @@ class SaveBannerRequest extends FormRequest
         if (! $this->exists('remove_image')) {
             $this->merge(['remove_image' => false]);
         }
+
+        if ($this->input('publication_action') === 'publish_now') {
+            $this->merge([
+                'is_active' => true,
+                'starts_at' => null,
+            ]);
+        }
     }
 
     protected function getRedirectUrl(): string
@@ -57,6 +64,7 @@ class SaveBannerRequest extends FormRequest
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'sort_order' => ['required', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['required', 'boolean'],
+            'publication_action' => ['nullable', 'in:publish_now'],
         ];
     }
 

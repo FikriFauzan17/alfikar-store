@@ -146,13 +146,13 @@
                 <div><label class="block text-sm font-medium" for="service_hours">Jam layanan</label><textarea class="mt-1 w-full border border-rule px-3 py-2" id="service_hours" name="service_hours" rows="2" maxlength="2000">{{ old('service_hours', $settings['service_hours'] ?? '') }}</textarea></div>
             </section>
         </div>
-        <p class="mt-6 text-sm text-ink/70">Simpan Draft hanya menyimpan perubahan beranda. Publikasikan menerapkan pengaturan yang ditampilkan di formulir.</p>
+        <p class="mt-6 text-sm text-ink/70">Simpan Draft hanya menyimpan perubahan beranda. Publikasikan sekarang menerapkan pengaturan yang ditampilkan di formulir.</p>
         <div class="mt-3 flex flex-wrap gap-3">
             <button class="border border-brand px-5 py-2 text-sm text-brand-dark hover:bg-ivory" type="submit" formaction="{{ route('admin.settings.homepage-draft') }}">Simpan Draft</button>
             @if ($hasHomepageDraft)
                 <a class="border border-rule px-5 py-2 text-sm text-brand-dark hover:bg-ivory" href="{{ route('admin.settings.homepage-preview') }}">Pratinjau</a>
             @endif
-            <button class="bg-brand px-5 py-2 text-sm text-white hover:bg-brand-dark" type="submit">Publikasikan</button>
+            <button class="bg-brand px-5 py-2 text-sm text-white hover:bg-brand-dark" type="submit">Publikasikan sekarang</button>
         </div>
     </form>
 @endsection

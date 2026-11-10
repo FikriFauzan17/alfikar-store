@@ -34,6 +34,10 @@ class SaveCategoryRequest extends FormRequest
             $attributes['is_published'] = false;
         }
 
+        if ($this->input('publication_action') === 'publish_now') {
+            $attributes['is_published'] = true;
+        }
+
         $this->merge($attributes);
     }
 
@@ -66,6 +70,7 @@ class SaveCategoryRequest extends FormRequest
             'remove_image' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_published' => ['required', 'boolean'],
+            'publication_action' => ['nullable', Rule::in(['publish_now'])],
         ];
     }
 }

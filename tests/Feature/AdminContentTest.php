@@ -138,6 +138,26 @@ it('creates and updates sanitized articles with permanent redirects from previou
     $this->assertDatabaseMissing('article_slug_redirects', ['article_id' => $article->id]);
 });
 
+it('publishes an article immediately when the publish now action is selected', function () {
+    $this->travelTo('2026-11-10 03:30:00');
+    $admin = User::factory()->create(['is_admin' => true]);
+    $this->actingAs($admin);
+
+    $this->get(route('admin.articles.create'))
+        ->assertOk()
+        ->assertSee('name="publication_action" value="publish_now">Publikasikan sekarang', false);
+    $this->post(route('admin.articles.store'), adminArticlePayload([
+        'status' => 'scheduled',
+        'published_at' => '2026-11-10T10:26',
+        'publication_action' => 'publish_now',
+    ]))->assertRedirect();
+
+    $article = Article::query()->where('slug', 'panduan-membaca-kitab')->firstOrFail();
+    expect($article->status)->toBe(ArticleStatus::Published)
+        ->and($article->published_at->toDateTimeString())->toBe('2026-11-10 03:30:00');
+    $this->get(route('articles.show', $article->slug))->assertOk()->assertSee($article->title);
+});
+
 it('keeps scheduled articles private until their publication time', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $this->actingAs($admin);
@@ -353,11 +373,19 @@ it('manages active banner content and validates banner destinations', function (
     $admin = User::factory()->create(['is_admin' => true]);
     $this->actingAs($admin);
 
-    $this->post(route('admin.banners.store'), adminBannerPayload())
+    $this->get(route('admin.banners.create'))
+        ->assertOk()
+        ->assertSee('name="publication_action" value="publish_now">Publikasikan sekarang', false);
+    $this->post(route('admin.banners.store'), adminBannerPayload([
+        'starts_at' => now()->addDay()->format('Y-m-d\TH:i'),
+        'is_active' => '0',
+        'publication_action' => 'publish_now',
+    ]))
         ->assertRedirect();
 
     $banner = Banner::query()->firstOrFail();
-    expect($banner->is_active)->toBeTrue();
+    expect($banner->is_active)->toBeTrue()
+        ->and($banner->starts_at)->toBeNull();
     $this->get(route('home'))->assertSee('Informasi toko')->assertSee('/artikel');
     $this->put(route('admin.banners.update', $banner), adminBannerPayload([
         'title' => 'Banner diperbarui',

@@ -53,5 +53,6 @@
 
 <div class="mt-7 flex flex-wrap gap-3">
     <button class="bg-brand px-5 py-2 text-sm text-white hover:bg-brand-dark" type="submit">{{ $banner ? 'Simpan perubahan' : 'Simpan banner' }}</button>
+    <button class="bg-brand-dark px-5 py-2 text-sm text-white hover:bg-brand" type="submit" name="publication_action" value="publish_now">Publikasikan sekarang</button>
     <a class="border border-rule px-5 py-2 text-sm" href="{{ route('admin.banners.index') }}">Batal</a>
 </div>
