@@ -31,9 +31,17 @@
                             <x-admin.badge :tone="$article->status->value === 'published' ? 'success' : ($article->status->value === 'scheduled' ? 'warning' : 'neutral')">{{ ucfirst($article->status->value) }}</x-admin.badge>
                         </td>
                         <td class="px-4 py-3">{{ $article->published_at?->translatedFormat('d F Y H:i') ?? '—' }}</td>
-                        <td class="px-4 py-3 text-right">
-                            <a class="text-brand underline underline-offset-4" href="{{ route('admin.articles.edit', $article) }}">Ubah</a>
-                            <a class="ml-4 text-red-800 underline underline-offset-4" href="{{ route('admin.articles.confirm-delete', $article) }}">Hapus</a>
+                        <td class="px-4 py-3">
+                            <div class="admin-row-actions">
+                                <a class="admin-row-action admin-row-action--edit" href="{{ route('admin.articles.edit', $article) }}">
+                                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="m13.5 3.5 3 3M3 17l3.8-.8L16 7a2.1 2.1 0 0 0-3-3L3.8 13.2 3 17Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/></svg>
+                                    Ubah
+                                </a>
+                                <a class="admin-row-action admin-row-action--delete" href="{{ route('admin.articles.confirm-delete', $article) }}">
+                                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="M4.5 6h11m-9.5 0 .6 10h7.8L15 6m-7-2h4l1 2M8 9v4m4-4v4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/></svg>
+                                    Hapus
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 @empty
