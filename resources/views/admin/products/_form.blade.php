@@ -88,9 +88,10 @@
         <textarea class="mt-1 w-full border border-rule bg-white px-3 py-2" id="meta_description" name="meta_description" rows="3" maxlength="320">{{ old('meta_description', $product?->meta_description) }}</textarea>
     </div>
     <div class="flex flex-wrap gap-x-6 gap-y-3 md:col-span-2">
-        <label class="flex items-center gap-2 text-sm"><input name="is_published" type="checkbox" value="1" @checked(old('is_published', $product?->is_published ?? false))> Terbit</label>
+        <label class="flex items-center gap-2 text-sm"><input name="is_published" type="checkbox" value="1" @checked(old('is_published', $product?->is_published ?? true))> Terbit</label>
         <label class="flex items-center gap-2 text-sm"><input name="is_featured" type="checkbox" value="1" @checked(old('is_featured', $product?->is_featured ?? false))> Unggulan</label>
         <label class="flex items-center gap-2 text-sm"><input name="is_bestseller" type="checkbox" value="1" @checked(old('is_bestseller', $product?->is_bestseller ?? false))> Bestseller</label>
+        <p class="text-xs text-ink/60 md:basis-full">Produk hanya tampil di beranda jika berstatus Terbit, kategorinya juga sudah diterbitkan, dan bagian Katalog Buku aktif di Pengaturan Beranda.</p>
     </div>
 </div>
 

@@ -234,10 +234,13 @@ it('prevents deleting a category that is referenced by a product', function () {
 
 it('creates and updates product inventory, pricing, publication and admin flags', function () {
     $admin = User::factory()->create(['is_admin' => true]);
-    $category = Category::factory()->create();
+    $category = Category::factory()->create(['is_published' => true]);
     $this->actingAs($admin);
 
-    $this->get(route('admin.products.create'))->assertOk();
+    $this->get(route('admin.products.create'))
+        ->assertOk()
+        ->assertSee('name="is_published" type="checkbox" value="1" checked', false)
+        ->assertSee('kategorinya juga sudah diterbitkan');
     $this->post(route('admin.products.store'), adminCatalogProductPayload($category))
         ->assertRedirect(route('admin.products.edit', Product::query()->first()));
 
@@ -249,6 +252,7 @@ it('creates and updates product inventory, pricing, publication and admin flags'
         ->and($product->is_bestseller)->toBeFalse();
     $this->assertDatabaseHas('audit_logs', ['event' => 'product.created', 'subject_id' => $product->id]);
     $this->get(route('admin.products.index'))->assertOk()->assertSee('Buku Pilihan Alfikar');
+    $this->get(route('home'))->assertOk()->assertSee('Buku Pilihan Alfikar');
     $this->get(route('admin.products.edit', $product))->assertOk();
 
     $this->put(route('admin.products.update', $product), adminCatalogProductPayload($category, [
