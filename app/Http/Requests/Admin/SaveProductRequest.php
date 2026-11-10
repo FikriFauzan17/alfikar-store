@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\Product;
+use DateTimeImmutable;
+use DateTimeZone;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -36,6 +38,33 @@ class SaveProductRequest extends FormRequest
             $attributes['slug'] = Str::slug($slug);
         }
 
+        $publishedAt = $this->input('published_at');
+        $timezoneOffset = $this->input('published_at_timezone_offset');
+
+        if (
+            is_string($publishedAt)
+            && is_string($timezoneOffset)
+            && preg_match('/\A-?\d{1,4}\z/', $timezoneOffset)
+            && (int) $timezoneOffset >= -840
+            && (int) $timezoneOffset <= 840
+        ) {
+            $date = DateTimeImmutable::createFromFormat(
+                '!Y-m-d\TH:i',
+                $publishedAt,
+                new DateTimeZone('UTC'),
+            );
+            $dateErrors = DateTimeImmutable::getLastErrors();
+
+            if (
+                $date instanceof DateTimeImmutable
+                && ($dateErrors === false || ($dateErrors['warning_count'] === 0 && $dateErrors['error_count'] === 0))
+            ) {
+                $attributes['published_at'] = $date
+                    ->modify($timezoneOffset.' minutes')
+                    ->format('Y-m-d H:i:s');
+            }
+        }
+
         foreach (['is_published', 'is_featured', 'is_bestseller'] as $booleanField) {
             if (! $this->exists($booleanField)) {
                 $attributes[$booleanField] = false;
@@ -60,6 +89,7 @@ class SaveProductRequest extends FormRequest
         $publicationAction = $attributes['publication_action'] ?? null;
         unset($attributes['publication_action']);
         unset($attributes['images']);
+        unset($attributes['published_at_timezone_offset']);
         $specificationsJson = $attributes['specifications_json'] ?? null;
         unset($attributes['specifications_json']);
 
@@ -162,6 +192,7 @@ class SaveProductRequest extends FormRequest
             'is_featured' => ['required', 'boolean'],
             'is_bestseller' => ['required', 'boolean'],
             'published_at' => ['nullable', 'date'],
+            'published_at_timezone_offset' => ['nullable', 'integer', 'between:-840,840'],
             'publication_action' => ['nullable', Rule::in(['draft', 'publish'])],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],

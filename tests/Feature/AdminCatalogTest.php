@@ -307,6 +307,30 @@ it('creates a product with its initial gallery in one submission', function () {
     $this->assertModelExists($product);
 });
 
+it('publishes a product immediately when its local publication time has passed', function () {
+    $this->travelTo('2026-11-10 03:30:00');
+    $admin = User::factory()->create(['is_admin' => true]);
+    $category = Category::factory()->create(['is_published' => true]);
+    $this->actingAs($admin);
+
+    $this->post(route('admin.products.store'), adminCatalogProductPayload($category, [
+        'is_featured' => '0',
+        'is_bestseller' => '0',
+        'published_at' => '2026-11-10T10:26',
+        'published_at_timezone_offset' => '-420',
+    ]))->assertRedirect(route('admin.products.edit', Product::query()->where('code', 'BK-ALF-0001')->first()));
+
+    $product = Product::query()->where('code', 'BK-ALF-0001')->firstOrFail();
+
+    $this->assertDatabaseHas('products', [
+        'id' => $product->id,
+        'published_at' => '2026-11-10 03:26:00',
+    ]);
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('Buku Pilihan Alfikar');
+});
+
 it('rejects a product gallery over the photo limit without creating a product', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $category = Category::factory()->create();

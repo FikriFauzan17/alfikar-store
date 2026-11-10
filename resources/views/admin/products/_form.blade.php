@@ -55,7 +55,8 @@
     </div>
     <div>
         <label class="block text-sm font-medium" for="published_at">Waktu publikasi</label>
-        <input class="mt-1 w-full border border-rule bg-white px-3 py-2" id="published_at" name="published_at" type="datetime-local" value="{{ old('published_at', $product?->published_at?->format('Y-m-d\TH:i')) }}">
+        <input class="mt-1 w-full border border-rule bg-white px-3 py-2" id="published_at" name="published_at" type="datetime-local" value="{{ old('published_at', $product?->published_at?->format('Y-m-d\TH:i')) }}" data-utc-datetime data-utc-datetime-local="{{ old('published_at_timezone_offset') !== null ? 'true' : 'false' }}">
+        <input name="published_at_timezone_offset" type="hidden" value="{{ old('published_at_timezone_offset', 0) }}" data-utc-datetime-offset>
     </div>
     <div class="md:col-span-2">
         <label class="block text-sm font-medium" for="description">Deskripsi</label>

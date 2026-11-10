@@ -1,6 +1,31 @@
 import { Editor, Extension, Node } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 
+document.querySelectorAll('[data-utc-datetime]').forEach((dateTimeInput) => {
+	if (!(dateTimeInput instanceof HTMLInputElement)) {
+		return;
+	}
+
+	const timezoneOffsetInput = dateTimeInput.form?.querySelector('[data-utc-datetime-offset]');
+
+	if (!(timezoneOffsetInput instanceof HTMLInputElement)) {
+		return;
+	}
+
+	if (dateTimeInput.dataset.utcDatetimeLocal !== 'true' && dateTimeInput.value) {
+		const utcDate = new Date(`${dateTimeInput.value}:00Z`);
+
+		if (!Number.isNaN(utcDate.getTime())) {
+			const pad = (value) => String(value).padStart(2, '0');
+			dateTimeInput.value = `${utcDate.getFullYear()}-${pad(utcDate.getMonth() + 1)}-${pad(utcDate.getDate())}T${pad(utcDate.getHours())}:${pad(utcDate.getMinutes())}`;
+		}
+	}
+
+	dateTimeInput.form?.addEventListener('submit', () => {
+		timezoneOffsetInput.value = String(new Date().getTimezoneOffset());
+	});
+});
+
 const siteMenu = document.querySelector('.site-menu');
 const mobileViewport = window.matchMedia('(max-width: 700px)');
 
